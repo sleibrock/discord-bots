@@ -11,10 +11,10 @@ import asyncio
 from sys import argv
 from subprocess import getstatusoutput
 from time import strftime, gmtime
+from math import sqrt, ceil, floor, factorial
 
 # shortcut to unpack a syscall from getstatusoutput
 call = lambda p: getstatusoutput(p)[1]
-
 
 def read_key(filename):
     """Read a key file which contains bot tokens"""

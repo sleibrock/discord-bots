@@ -19,12 +19,18 @@ async def source():
 @client.command()
 async def commits():
     """Print out a `git log --oneline | head -n 5`"""
-    return await client.say(pre_text(call("git log --oneline | head -n 5")))
+    return await client.say(pre_text(call("git log --decorate=full --graph --oneline | head -n 5")))
 
 @client.command()
 async def update():
     """Execute a `git pull` to update the code (doesn't restart VMs)"""
-    return await client.say(pre_text(call(["git pull"])))
+    result = call("git pull")
+    await client.say(pre_text(result))
+    if result.strip() == "Already up-to-date.":
+        return
+    await client.say("Stopping thread...")
+    client.close()
+    return logger("Upgrading myself senpai")
 
 @client.command()
 async def uname():
@@ -48,18 +54,26 @@ async def e(*expression):
     Imports are not allowed in eval expressions
     """
     s = " ".join(expression)
-    print(expression)
-    print(s)
     if len(expression) > 80:
         return await client.say("Input was too large, sorry")
     try:
-        await client.say(eval(s))
+        await client.say(pre_text(">>> {}".format(eval(s))))
     except Exception as ex:
         await client.say("Error: {}".format(ex))
     return
 
 if __name__ == "__main__":
-    argv.pop(0)
-    key = argv.pop(0)
-    client.run(read_key(key))
+    try:
+        argv.pop(0)
+        key = argv.pop(0)
+        client.run(read_key(key))
+    except Exception as e:
+        logger("Whoops! {}".format(e))
+    except SystemExit:
+        logger("Leaving this existence behind")
+    except KeyboardInterrupt:
+        logger("Ouch!")
+    quit()
+
+# end
 

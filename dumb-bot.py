@@ -76,30 +76,6 @@ async def servers():
     return await client.say(pre_text(", ".join(map(str, client.servers))))
 
 @client.command()
-async def comp(*expression):
-    """
-    Evaluate an expression with Python syntax
-    Non-expressions like keywords are not allowed
-
-    Math functions:
-     * pow, exp, sqrt, ceil, floor, sin, cos, tan, factorial
-     * radians, degrees, acos, asin, atan, atan2, erf, gamma, gcd
-    """
-    s = " ".join(expression)
-    if len(expression) > 80:
-        return await client.say("Input was too large, sorry")
-    try:
-        # TODO: add some kind of timeout condition to prevent inf recursion
-        output = eval(s)
-        if len(output) > 100:
-            await client.say("Output was too large, sorry")
-        else:
-            await client.say(pre_text(">>> {}".format(output)))
-    except Exception as ex:
-        await client.say("Error: {}".format(ex))
-    return
-
-@client.command()
 async def rtd(*string):
     """
     Roll a d<N> die <X> number of times

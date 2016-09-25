@@ -159,6 +159,10 @@ async def yt(*search):
         if not items:
             return await client.say("Couldn't find any results")
         href = items[0].find("a", class_="yt-uix-sessionlink")["href"]
+
+        # Check if the first result was a Google Adsense link
+        if not href.startswith("/watch"):
+            href = items[1].find("a", class_="yt-uix-sessionlink")["href"]
         return await client.say("https://youtube.com{}".format(href))
     except Exception as ex:
         logger("Fail: {}".format(ex))

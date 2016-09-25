@@ -137,11 +137,13 @@ async def yt(*search):
 
         # Search for a proper youtube url, has to start with /watch
         i, found = 0, False
-        while not found or i < 20:
+        while not found and i < 20:
             href = items[i].find("a", class_="yt-uix-sessionlink")["href"]
             if href.startswith("/watch"):
                 found = True
             i += 1
+        if not found:
+            return await client.say("Couldn't find a link")
         return await client.say("https://youtube.com{}".format(href))
     except Exception as ex:
         logger("Fail: {}".format(ex))

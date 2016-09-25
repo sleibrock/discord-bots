@@ -1,4 +1,6 @@
-#lang racket
+#lang racket/base
+
+(require racket/string racket/system racket/list)
 
 ;; Program to hypervise bot threads
 ;; Step 1: create a vector of Bot threads
@@ -54,7 +56,7 @@
    (λ ()
      (define (loop)
        (displayln "Beginning Gravekeeper daemon...")
-       (for ([x (in-range total-bots)])
+       (for ([x ids])
          (re-animate x))
        (displayln "Sleeping Gravekeeper...")
        (sleep sleep-rate)

@@ -34,7 +34,7 @@
 (define (re-animate id)
   (displayln (format "Checking thread ~a" id))
   (when (thread-dead? (vector-ref threads id))
-    (displayln (format "Bringing thread ~a back to life"))
+    (displayln (format "Bringing thread ~a back to life" id))
     (vector-set! threads id (start-bot id))))
 
 ;; Variables ###############################################################
@@ -56,6 +56,7 @@
        (displayln "Beginning Gravekeeper daemon...")
        (for ([x (in-range total-bots)])
          (re-animate x))
+       (displayln "Sleeping Gravekeeper...")
        (sleep sleep-rate)
        (loop))
      (loop))))

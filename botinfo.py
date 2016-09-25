@@ -11,10 +11,32 @@ import asyncio
 from sys import argv
 from subprocess import getstatusoutput
 from time import strftime, gmtime
-from math import sqrt, ceil, floor, factorial
+from os import mkdir
+from os.path import isdir, join
+
+# Bot local data information
+BOT_FOLDER = "botdata"
 
 # shortcut to unpack a syscall from getstatusoutput
 call = lambda p: getstatusoutput(p)[1]
+
+def setup_bot_data(bot_name, logger):
+    """
+    Set up the bot data folder in the root location
+    If if can't create the folders, return False
+    else return True (so our bot can continue)
+    """
+    try:
+        if not isdir(BOT_FOLDER):
+            logger("Setting up root bot folder")
+            mkdir(BOT_FOLDER)
+        if not isdir(join(BOT_FOLDER, bot_name)):
+            logger("Setting up {} data folder")
+            mkdir(join(BOT_FOLDER, bot_name))
+    except Exception as ex:
+        logger("Fail: {}".format(ex))
+        return False
+    return True 
 
 def read_key(filename):
     """Read a key file which contains bot tokens"""

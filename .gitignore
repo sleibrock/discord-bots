@@ -2,3 +2,4 @@ __pyenv__/
 *.py[cod]
 dev
 *.key
+botdata/

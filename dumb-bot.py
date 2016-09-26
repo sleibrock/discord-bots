@@ -2,8 +2,6 @@
 #-*- coding: utf-8 -*-
 
 from botinfo import *
-from math import sqrt, sin, cos, tan, pow, exp, pi, ceil, floor, e, factorial, log, log2
-from math import radians, degrees, acos, asin, atan, atan2, erf, gamma, gcd
 from bs4 import BeautifulSoup as BS
 from requests import get as re_get
 from random import randint

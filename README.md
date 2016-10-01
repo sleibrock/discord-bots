@@ -72,6 +72,17 @@ bring memory use down. The memory usage might get too high for certain smaller d
 to handle, as this will be hosted on a Raspberry Pi device with only one gigabyte of 
 RAM.
 
+# Creating a New Bot User
+
+Under Discord's API pages it allows you to create a new application using the API. 
+From there once you create your application, you can turn it into a Bot User, which 
+will basically tag a "Bot" label onto it's username for the rest of it's life.
+
+Once you turn it into a bot user, copy the Client ID given by Discord, copy
+[this](https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot&permissions=0) 
+link and replace the CLIENT_ID with the number Discord assigned your bot. Now you can 
+add it to a server that you own.
+
 # Contributing
 
 Follow standard style conventions like 4-space tabs for Python programs, but that's 

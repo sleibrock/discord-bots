@@ -4,7 +4,7 @@
 from botinfo import *
 from bs4 import BeautifulSoup as BS
 from requests import get as re_get
-from random import randint
+from random import randint, choice
 from os import mkdir
 from os.path import isdir, join
 

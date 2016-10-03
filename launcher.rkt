@@ -18,6 +18,7 @@
 (define bots
   (vector
    (bot "python" "dumb-bot.py" "dumb-bot.key")
+   (bot "python" "remind-bot.py" "remind-bot.key")
    ))
 
 ;; Functions ################################################################

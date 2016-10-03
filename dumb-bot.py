@@ -50,8 +50,9 @@ async def update():
     if result.strip() == "Already up-to-date.": # figure out something non-string-comp
         return
     await client.say("Upgrading myself senpai")
+    logger("Killing own thread for upgrade")
     client.close()
-    return logger("Killing own thread for upgrade")
+    return quit()
 
 @client.command()
 async def uname():

@@ -83,6 +83,13 @@ Once you turn it into a bot user, copy the Client ID given by Discord, copy
 link and replace the CLIENT_ID with the number Discord assigned your bot. Now you can 
 add it to a server that you own.
 
+# Plans
+
+* RemindMe bot
+* Reading thread to listen for Bot output
+* Artwork bot
+* Some kind of MUD bot
+
 # Contributing
 
 Follow standard style conventions like 4-space tabs for Python programs, but that's 

@@ -13,7 +13,6 @@
 ;; code   - the name of the file we want to execute with the interp
 ;; key    - a file containing the Discord tokens for each bot
 (struct bot (interp code key))
-(define sleep-rate 60)
 
 ;; Define bots here - file to execute and their keys
 (define bots
@@ -30,7 +29,9 @@
 (define (start-bot bot-id)
   (thread
    (λ ()
-     (system (bot->command (vector-ref bots bot-id))))))
+     (displayln (format "Starting bot ~a" bot-id))
+     (system (bot->command (vector-ref bots bot-id)))
+     (displayln (format "Bot ID ~a ended unexpectedly" bot-id)))))
 
 ;; The necromancer function to create new threads from dead matter 
 (define (re-animate id)
@@ -43,9 +44,6 @@
 ;; Total number of bots we have to manage
 (define total-bots (vector-length bots))
 
-;; a list that we can iterate over (might be removed in future versions)
-(define ids (range total-bots))
-
 ;; The bot threads to maintain
 (define threads
   (build-vector total-bots start-bot))
@@ -55,11 +53,11 @@
   (thread
    (λ ()
      (define (loop)
-       (displayln "Beginning Gravekeeper daemon...")
-       (for ([x ids])
+       (displayln "Beginning Gravekeeper sweep...")
+       (for ([x (in-range total-bots)])
          (re-animate x))
        (displayln "Sleeping Gravekeeper...")
-       (sleep sleep-rate)
+       (sleep 60) ; number of seconds the gravekeeper should sleep
        (loop))
      (loop))))
 

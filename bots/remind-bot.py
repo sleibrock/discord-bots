@@ -19,7 +19,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.content.lower().startswith('remindme!'):
-        await client.send_message(message.channel, 'Calculating messages...')
+        await client.send_message(message.channel, 'Received message')
         return logger("Received a message!")
 
 if __name__ == "__main__":

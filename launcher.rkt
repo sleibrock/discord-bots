@@ -17,8 +17,8 @@
 ;; Define bots here - file to execute and their keys
 (define bots
   (vector
-   (bot "python" "dumb-bot.py" "dumb-bot.key")
-   (bot "python" "remind-bot.py" "remind-bot.key")
+   (bot "python" "bots/dumb-bot.py"   "dumb-bot.key")
+   (bot "python" "bots/remind-bot.py" "remind-bot.key")
    ))
 
 ;; Functions ################################################################

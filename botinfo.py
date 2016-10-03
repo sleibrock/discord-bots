@@ -31,7 +31,7 @@ def setup_bot_data(bot_name, logger):
             logger("Setting up root bot folder")
             mkdir(BOT_FOLDER)
         if not isdir(join(BOT_FOLDER, bot_name)):
-            logger("Setting up {} data folder")
+            logger("Setting up {} data folder".format(bot_name))
             mkdir(join(BOT_FOLDER, bot_name))
     except Exception as ex:
         logger("Fail: {}".format(ex))

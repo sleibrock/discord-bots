@@ -11,8 +11,8 @@ import asyncio
 from sys import argv
 from subprocess import getstatusoutput
 from time import strftime, gmtime
-from os import mkdir
-from os.path import isdir, join
+from os import mkdir, listdir
+from os.path import isfile, isdir, join
 
 # Bot local data information
 BOT_FOLDER = "botdata"
@@ -45,6 +45,21 @@ def read_key(filename):
 
 def pre_text(string):
     return "```{}```".format(string)
+
+def debug_message(msg):
+    return pre_text("From: {}\nChannel: {}\nMessage: {}".format(msg.author, msg.channel, msg.content))
+
+def bot_folder(bot_name):
+    return join(BOT_FOLDER, bot_name)
+
+def create_filegen(bot_name):
+    """
+    Create a function which allows quick path joins
+    to interact with files in a Bot's folder
+    """
+    def bot_file(filename):
+        return join(BOT_FOLDER, bot_name, filename)
+    return bot_file
 
 def create_logger(bot_name):
     """

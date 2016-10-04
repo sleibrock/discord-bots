@@ -3,6 +3,13 @@ Discord Bots
 
 A collection of MrDestructoid robots for Discord.
 
+### Docs
+
+* [AsyncIO Docs](https://docs.python.org/3.4/library/asyncio.html)
+* [Discord.py API](http://discordpy.readthedocs.io/en/latest/api.html)
+* [Discord Dev Portal](https://discordapp.com/developers/docs/intro)
+* [Racket Threading Docs](https://docs.racket-lang.org/reference/threads.html)
+
 # Requirements, Installation and Setup
 
 First I'll explain how to set this all up. Then I'll explain the 
@@ -10,7 +17,7 @@ design behind why I chose to use the tech behind this.
 
 My Discord Bots project requires the following:
 
-* Python 3
+* Python 3.5
 * Pip
 * Racket
 
@@ -50,28 +57,6 @@ Now, lastly, to run, should be as simple as:
 make run
 ```
 
-# Bot Manager in Racket
-
-Racket as a standard installation, comes with the ability to create, manage and 
-destroy threads very easily. So by this, I created a program which has the ability 
-to launch multiple instances of Python programs and watch their threads. I call 
-this the Gravekeeper program.
-
-If a Bot fails, from some unhandled exception, IO error, or whatever, Racket will 
-check each thread every minute to see if the thread is running. If it isn't, it will 
-re-initialize the program that crashed and respawn it in a new thread, and put it back 
-into the thread pool.
-
-This was very easy to do in Racket, and doing it in Python would've been much much 
-worse. The new Python `asyncio` library might be useful for creating a Python program to 
-do this functionality, but I prefer it in Racket for the time being.
-
-The downside may be too much memory gets consumed by Racket since it's a high-level 
-interpreted language. I might have to consider compiling it or using typed Racket to 
-bring memory use down. The memory usage might get too high for certain smaller devices 
-to handle, as this will be hosted on a Raspberry Pi device with only one gigabyte of 
-RAM.
-
 # Creating a New Bot User
 
 Under Discord's API pages it allows you to create a new application using the API. 
@@ -85,7 +70,6 @@ add it to a server that you own.
 
 # Plans
 
-* RemindMe bot
 * Reading thread to listen for Bot output
 * Artwork bot
 * Some kind of MUD bot

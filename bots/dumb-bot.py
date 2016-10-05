@@ -23,6 +23,10 @@ async def on_ready():
         client.close()
     return logger("Connection status: {}".format(client.is_logged_in))
 
+@client.event
+async def on_error(msg):
+    return logger("Discord error: {}".format(msg))
+
 @client.command()
 async def source():
     """Print out a link to the source code"""
@@ -166,6 +170,9 @@ async def goodshit(*args):
 
 @client.command()
 async def osfrog(*args):
+    """
+    Yet another command that is temporary
+    """
     data = [":frog: BALANCE IN ALL THINGS :frog:",
             ":thumbsup: Thanks Purge :thumbsup:",
             ":frog: :gun:",
@@ -177,7 +184,6 @@ async def osfrog(*args):
             ":frog: SEEMS GOOD TO ME :frog:",
             ":frog: le balanced 1050 :dragon: lance attack range :frog:"]
     return await client.say(choice(data))
-            
 
 if __name__ == "__main__":
     try:

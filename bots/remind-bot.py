@@ -5,6 +5,7 @@ from botinfo import *
 from time import time, mktime
 from datetime import datetime, timedelta
 
+# bot info and whatever who cares
 bot_name = "remind-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
@@ -13,7 +14,11 @@ bot_data = create_filegen(bot_name)
 # only support weeks, days and hours right now
 # months and years involves specific edge cases and leap years etc
 units = ["weeks", "days", "hours", "minutes"]
+units.extend([t[:-1] for t in units])
+
+# settings
 max_reminders = 5
+readloop = True
 
 helpmsg = pre_text("""Remind-bot
 Hold up to 5 reminders for remind-bot to remind you about
@@ -33,7 +38,21 @@ def pretty_res_date(res_date):
     return ", ".join(result)
 
 def time_remaining(utime):
+    """
+    Invert a unix time stamp and convert it to a "time remaining"
+    stamp representing weeks/days/hours/minutes
+    Check if the time stamp already expired (if utime <= cur_time)
+    """
     pass
+
+def create_offset(time_arr):
+    """
+    Turn a time array of ints into a unix time stamp
+    representing the reminder's time delta
+    """
+    delta = timedelta(days=time_arr[1], weeks=time_arr[0], hours=time_arr[2], minutes=time_arr[3])
+    offset = datetime.now() + delta
+    return mktime(offset.timetuple())
 
 @client.event
 async def on_ready():
@@ -46,6 +65,16 @@ async def on_ready():
     return logger("Connection status: {}".format(client.is_logged_in))
 
 @client.event
+async def on_error(msg):
+    """
+    When bot receives a fatal websocket error, close the
+    reading thread down and close the client
+    """
+    readloop = False # shut down the reading thread
+    client.close()
+    return logger("Discord error: {}".format(msg))
+
+@client.event
 async def on_message(msg):
     """
     Function to handle message dispatch
@@ -54,10 +83,13 @@ async def on_message(msg):
     auth = str(msg.author.id)
     m = msg.content.lower().strip()
 
-    if m.startswith('!!help') and len(m) == 6:
+    if "!!" not in m:
+        return
+
+    if m == "!!help":
         return await client.send_message(msg.channel, helpmsg)
 
-    if m.startswith('!!clear') and len(m) == 7:
+    if m == "!!clear":
         with open(bot_data(auth), "w") as f:
             f.write("")
         return await client.send_message(msg.author, "Reminders cleared.")
@@ -66,59 +98,59 @@ async def on_message(msg):
     if m.startswith('!!list') and len(m) == 6:
         pass
 
-    if "!!" in m and m.count("!!") == 1 and len(m) > 10:
-        dmsg, tmsg = m.split("!!")
-        
-        # Transform strings that look like 2d 3h into timedeltas
-        splits = tmsg.strip().split(" ")
+    # Check if the input string doesn't match our conditions
+    if m.count("!!") != 1 or len(m) < 10:
+        return
 
-        if not splits:
-            return await client.send_message(msg.author, "You didn't input anything! Try '!!help'")
+    # strip the message from the time span
+    dmsg, tmsg = m.split("!!")
 
-        res = [0,0,0,0] # weeks, days, hours, minutes
-        while len(splits) != 0:
-            num = splits.pop(0) # check if it's a number
-            if not num.isnumeric():
-                return await client.send_message(msg.author, "Invalid number '{}', try '!!help'".format(num))
-            unit = splits.pop(0) # check what unit this is
-            if unit not in units:
-                return await client.send_message(msg.author, "Invalid unit '{}', try '!!help'".format(unit))
-            index = units.index(unit) 
-            if res[index] != 0:
-                return await client.send_message(msg.author, "Unit already set for {}, try '!!help'".format(unit))
-            res[index] = int(num)
+    # Transform strings that look like 2d 3h into timedeltas
+    splits = tmsg.strip().split(" ")
 
-        # check to see if a user gave us all 0 units (0 hours, 0 days, etc)
-        if not any(res):
-            return await client.send_message(msg.author, "Cannot use zero-time delta")
+    # Stop if no time span was given
+    if not splits:
+        return await client.send_message(msg.author, "You didn't input anything! Try '!!help'")
 
-        # create a time delta and add it's unix time to our current time
-        delta = timedelta(days=res[1], weeks=res[0], hours=res[2], minutes=res[3])
-        now = datetime.now()
-        offset = now + delta
-        utime = mktime(offset.timetuple())
+    # convert a time span string into an array of ints
+    res = [0,0,0,0] # weeks, days, hours, minutes
+    while len(splits) != 0:
+        num = splits.pop(0) # check if it's a number
+        if not num.isnumeric():
+            return await client.send_message(msg.author, "Invalid number '{}', try '!!help'".format(num))
+        unit = splits.pop(0) # check what unit this is
+        if unit not in units:
+            return await client.send_message(msg.author, "Invalid unit '{}', try '!!help'".format(unit))
+        index = units.index(unit) % (len(units)//2) # oddest looking code here
+        if res[index] != 0:
+            return await client.send_message(msg.author, "Unit already set for {}, try '!!help'".format(unit))
+        res[index] = int(num)
 
-        # Read a users file to scan for their previous reminders
-        if isfile(bot_data(auth)):
-            with open(bot_data(auth), "r") as f:
-                lines = f.readlines()
-                if len(lines) >= max_reminders:
-                    return await client.send_message(msg.author, "Full! Clear your list with 'remclear!'")
-        else:
-            lines = []        
+    # check to see if a user gave us all 0 units (0 hours, 0 days, etc)
+    if not any(res):
+        return await client.send_message(msg.author, "Cannot use zero-time delta")
 
-        lines.append("{},{}".format(int(utime), dmsg))
-        with open(bot_data(auth), "w") as f:
-            f.write("\n".join(lines))
+    # Read a users file to scan for their previous reminders
+    if not isfile(bot_data(auth)):
+        lines = []
+    else:
+        with open(bot_data(auth), "r") as f:
+            lines = f.readlines()
+        if len(lines) >= max_reminders:
+            return await client.send_message(msg.author, "Full! Clear your list with '!!clear'")
 
-        return await client.send_message(msg.author, "Reminder set for {}".format(pretty_res_date(res)))
+    lines.append("{},{}".format(int(create_offset(res)), dmsg))
+    with open(bot_data(auth), "w") as f:
+        f.write("\n".join(lines))
+
+    return await client.send_message(msg.author, "Reminder set for {}".format(pretty_res_date(res)))
 
 async def scan_reminders():
     """
     Function to scan all users reminder files
     Builds up a queue then dispatches reminders to each reminder in the queue
     """
-    while True:
+    while readloop:
         await asyncio.sleep(60) # scan once every 5 minutes
         queue = list()
         for f in listdir(bot_folder(bot_name)):
@@ -140,6 +172,7 @@ async def scan_reminders():
             r = await send_message(*alert)
             if not r:
                 logger("Couldn't dispatch message to {}".format(alert[0]))
+    return logger("Reading thread closed")
 
 async def send_message(uid, msg):
     """
@@ -169,9 +202,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger("Ouch!")
     finally:
+        logger("Exiting")
+        reading = False
         loop.run_until_complete(client.logout())
         loop.stop()
         loop.close()
-    quit()
+        quit()
 
 # end

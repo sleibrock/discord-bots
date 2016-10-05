@@ -58,7 +58,7 @@
        (for ([x (in-range total-bots)])
          (re-animate x))
        (displayln "Sleeping Gravekeeper...")
-       (sleep 60) ; number of seconds the gravekeeper should sleep
+       (sleep 300) ; number of seconds the gravekeeper should sleep
        (loop))
      (loop))))
 

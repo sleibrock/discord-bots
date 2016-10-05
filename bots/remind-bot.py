@@ -167,6 +167,9 @@ async def scan_reminders():
             with open(bot_data(f), 'w') as df:
                 df.write("\n".join(rewrite))
 
+        if not client.is_logged_in:
+            return
+
         # dispatch alerts that were queued
         for alert in queue:
             r = await send_message(*alert)

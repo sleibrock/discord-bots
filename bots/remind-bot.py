@@ -17,8 +17,9 @@ units = ["weeks", "days", "hours", "minutes"]
 units.extend([t[:-1] for t in units])
 
 # settings
-max_reminders = 5
-readloop = True
+settings = {"readloop":True,
+            "max_rem": 5
+            }
 
 helpmsg = pre_text("""Remind-bot
 Hold up to 5 reminders for remind-bot to remind you about
@@ -33,8 +34,12 @@ Disclaimer: reminders are not encrypted, they are stored in plaintext
 def pretty_res_date(res_date):
     """
     Convert a res date list into a pretty list for printing
+    If k==0 then we bump the index up to a single unit
+
+    i + (units.length/2) * int(k==0) -> 1 minute instead of 1 minutes
     """
-    result = ["{} {}".format(k, units[i]) for i, k in enumerate(res_date) if k != 0]
+    result = ["{} {}".format(k, units[i+((len(units)//2)*int(k==1))])
+              for i, k in enumerate(res_date) if k != 0]
     return ", ".join(result)
 
 def time_remaining(utime):
@@ -62,6 +67,7 @@ async def on_ready():
     if not setup_bot_data(bot_name, logger):
         logger("Failed to set up {}'s folder".format(bot_name))
         client.close()
+    settings["readloop"] = True
     return logger("Connection status: {}".format(client.is_logged_in))
 
 @client.event
@@ -70,6 +76,7 @@ async def on_error(msg):
     When bot receives a fatal websocket error, close the
     reading thread down and close the client
     """
+    settings["readloop"] = False
     client.close()
     return logger("Discord error: {}".format(msg))
 
@@ -135,7 +142,7 @@ async def on_message(msg):
     else:
         with open(bot_data(auth), "r") as f:
             lines = f.readlines()
-        if len(lines) >= max_reminders:
+        if len(lines) >= settings["max_rem"]:
             return await client.send_message(msg.author, "Full! Clear your list with '!!clear'")
 
     lines.append("{},{}".format(int(create_offset(res)), dmsg))
@@ -149,7 +156,7 @@ async def scan_reminders():
     Function to scan all users reminder files
     Builds up a queue then dispatches reminders to each reminder in the queue
     """
-    while readloop:
+    while settings["readloop"]:
         await asyncio.sleep(60) # scan once every 5 minutes
         queue = list()
         for f in listdir(bot_folder(bot_name)):
@@ -166,15 +173,14 @@ async def scan_reminders():
             with open(bot_data(f), 'w') as df:
                 df.write("\n".join(rewrite))
 
-        logger("Logged in: {}, Open ws: {}".format(client.is_logged_in, client.is_closed))
+        logger("Logged in: {}, Open ws: {}".format(client.is_logged_in, not client.is_closed))
         if not client.is_logged_in or client.is_closed:
-            readloop = False
+            settings["readloop"] = False
             return logger("Client is not logged in")
 
         # dispatch alerts that were queued
         for alert in queue:
-            r = await send_message(*alert)
-            if not r:
+            if not await send_message(*alert):
                 logger("Couldn't dispatch message to {}".format(alert[0]))
     return logger("Reading thread closed")
 
@@ -207,7 +213,7 @@ if __name__ == "__main__":
         logger("Ouch!")
     finally:
         logger("Exiting")
-        reading = False
+        settings["readloop"] = False
         loop.run_until_complete(client.logout())
         loop.stop()
         loop.close()

@@ -70,7 +70,6 @@ async def on_error(msg):
     When bot receives a fatal websocket error, close the
     reading thread down and close the client
     """
-    readloop = False # shut down the reading thread
     client.close()
     return logger("Discord error: {}".format(msg))
 
@@ -167,8 +166,10 @@ async def scan_reminders():
             with open(bot_data(f), 'w') as df:
                 df.write("\n".join(rewrite))
 
-        if not client.is_logged_in:
-            return
+        logger("Logged in: {}, Open ws: {}".format(client.is_logged_in, client.is_closed))
+        if not client.is_logged_in or client.is_closed:
+            readloop = False
+            return logger("Client is not logged in")
 
         # dispatch alerts that were queued
         for alert in queue:

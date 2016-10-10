@@ -52,6 +52,21 @@ def debug_message(msg):
 def bot_folder(bot_name):
     return join(BOT_FOLDER, bot_name)
 
+def read_lines(file_name):
+    """
+    Read all the lines in a given file
+    Shortcut to avoid clumping up of many with-blocks
+    Handles the IO exception to return a blank list when no file is present
+    """
+    lines = []
+    try:
+        with open(file_name, "r") as f:
+            lines = f.readlines()
+    except Exception:
+        pass
+    finally:
+        return lines
+
 def create_filegen(bot_name):
     """
     Create a function which allows quick path joins

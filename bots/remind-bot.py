@@ -114,22 +114,22 @@ async def on_message(msg):
     # Transform strings that look like 2d 3h into timedeltas
     splits = tmsg.strip().split(" ")
 
-    # Stop if no time span was given
-    if not splits:
-        return await client.send_message(msg.author, "You didn't input anything! Try '!!help'")
+    # Stop if no time span was given (ie: empty list or less than 2 units of text)
+    if not splits or len(splits) < 2:
+        return
 
     # convert a time span string into an array of ints
     res = [0,0,0,0] # weeks, days, hours, minutes
     while len(splits) != 0:
         num = splits.pop(0) # check if it's a number
         if not num.isnumeric():
-            return await client.send_message(msg.author, "Invalid number '{}', try '!!help'".format(num))
+            return
         unit = splits.pop(0) # check what unit this is
         if unit not in units:
-            return await client.send_message(msg.author, "Invalid unit '{}', try '!!help'".format(unit))
+            return
         index = units.index(unit) % (len(units)//2) # oddest looking code here
         if res[index] != 0:
-            return await client.send_message(msg.author, "Unit already set for {}, try '!!help'".format(unit))
+            return
         res[index] = int(num)
 
     # check to see if a user gave us all 0 units (0 hours, 0 days, etc)
@@ -173,7 +173,6 @@ async def scan_reminders():
             with open(bot_data(f), 'w') as df:
                 df.write("\n".join(rewrite))
 
-        logger("Logged in: {}, Open ws: {}".format(client.is_logged_in, not client.is_closed))
         if not client.is_logged_in or client.is_closed:
             settings["readloop"] = False
             return logger("Client is not logged in")

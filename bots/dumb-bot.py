@@ -34,7 +34,7 @@ async def source():
 
 @client.command()
 async def commits():
-    """Print out a `git log --graph --decorate=full --oneline | head -n 5`"""
+    """Print out a `git log --graph --decorate=short --oneline | head -n 5`"""
     return await client.say(pre_text(call("git log --decorate=full --graph --oneline | head -n 5")))
 
 @client.command()

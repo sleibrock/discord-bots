@@ -5,11 +5,13 @@ from botinfo import *
 from bs4 import BeautifulSoup as BS
 from requests import get as re_get
 from random import randint, choice
-from os import mkdir
-from os.path import isdir, join
+
+help_msg = """A Bot that doesn't do a whole lot
+https://github.com/sleibrock/discord-bots
+"""
 
 bot_name = "dumb-bot"
-client = commands.Bot(command_prefix=".", description="A bot that doesn't do a whole lot")
+client = commands.Bot(command_prefix=".", description=help_msg)
 logger = create_logger(bot_name)
 
 @client.event
@@ -19,18 +21,13 @@ async def on_ready():
     Set vars, check for bot folder existence, etc
     """
     if not setup_bot_data(bot_name, logger):
-        logger("Failed to set up {}'s folder".format(bot_name))
         client.close()
+        return logger("Failed to set up {}'s folder".format(bot_name))
     return logger("Connection status: {}".format(client.is_logged_in))
 
 @client.event
-async def on_error(msg):
+async def on_error(msg, *args, **kwargs):
     return logger("Discord error: {}".format(msg))
-
-@client.command()
-async def source():
-    """Print out a link to the source code"""
-    return await client.say("https://github.com/sleibrock/discord-bots")
 
 @client.command()
 async def commits():
@@ -38,14 +35,9 @@ async def commits():
     return await client.say(pre_text(call("git log --decorate=full --graph --oneline | head -n 5")))
 
 @client.command()
-async def authors():
-    """Return a `git shortlog -sn` output to print authors"""
-    return await client.say(pre_text(call("git shortlog -sn")))
-
-@client.command()
 async def update():
     """
-    Execute a `git pull` to update the code 
+    Execute a `git pull` to update the code
     If there was a successful pull, dumb-bot will restart his own thread
     """
     # TODO: detect files updated and kill their respected threads?
@@ -59,29 +51,9 @@ async def update():
     return quit()
 
 @client.command()
-async def uname():
-    """Return the system info of the host"""
-    return await client.say(pre_text(call("uname -a")))
-    
-@client.command()
-async def uptime():
-    """Return the uptime of the host machine"""
-    return await client.say(pre_text(call(["uptime"])))
-
-@client.command()
-async def free():
-    """See how much memory is available"""
-    return await client.say(pre_text(call(["free"])))
-
-@client.command()
-async def servers():
-    """See the servers the bot is connected to"""
-    return await client.say(pre_text(", ".join(map(str, client.servers))))
-
-@client.command()
 async def rtd(*string):
     """
-    Roll a d<N> die <X> number of times
+    Roll a d<N> di[c]e <X> number of times
     Example: .rtd 2d10 - rolls two d10 dice
     """
     dice_str = "".join(string).strip()
@@ -91,7 +63,7 @@ async def rtd(*string):
     try:
         times, sides = list(map(int, dice_str.lower().split("d")))
         logger("roll {} d{}".format(times, sides))
-        res = [randint(1, sides) for x in range(times)] 
+        res = [randint(1, sides) for x in range(times)]
         return await client.say(", ".join(map(str, res)))
     except Exception as ex:
         logger("Error: {}".format(ex))
@@ -153,22 +125,6 @@ async def yt(*search):
     return await client.say("Failed to request the search")
 
 @client.command()
-async def goodshit(*args):
-    """
-    Stupid command that is temporary
-    """
-    data = [":ok_hand::eyes::ok_hand::eyes::ok_hand::eyes::ok_hand::eyes::ok_hand::eyes: ",
-            "good shit go౦ԁ sHit:ok_hand: thats :heavy_check_mark: some good:ok_hand:",
-            ":ok_hand:shit right:ok_hand::ok_hand:there:ok_hand::ok_hand::ok_hand: right",
-            ":heavy_check_mark:there :heavy_check_mark::heavy_check_mark:if i do ƽaү so my ",
-            " :100: i say so :100: thats what im talking about right there right there ",
-            "(chorus: ʳᶦᵍʰᵗ ᵗʰᵉʳᵉ) mMMMMᎷМ:100: :ok_hand::ok_hand: :ok_hand:НO0ОଠOOOOOОଠଠ",
-            "Ooooᵒᵒᵒᵒᵒᵒᵒᵒᵒ:ok_hand: :ok_hand::ok_hand: :ok_hand: :100: :ok_hand: :eyes:",
-            " :eyes: :eyes: :ok_hand::ok_hand:Good shit"]
-            
-    return await client.say("".join(data))
-
-@client.command()
 async def osfrog(*args):
     """
     Yet another command that is temporary
@@ -182,7 +138,8 @@ async def osfrog(*args):
             ":frog: Vacuum​ cooldown rescaled from 28.0 seconds to 28 seconds :frog:",
             ":frog: le balanced :cloud_tornado: man :frog:",
             ":frog: SEEMS GOOD TO ME :frog:",
-            ":frog: le balanced 1050 :dragon: lance attack range :frog:"]
+            ":frog: le balanced 1050 :dragon: lance attack range :frog:",
+            ":frog: ¯\_(ツ)_/¯ :frog:",]
     return await client.say(choice(data))
 
 if __name__ == "__main__":

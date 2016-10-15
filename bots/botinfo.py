@@ -20,6 +20,14 @@ BOT_FOLDER = "botdata"
 # shortcut to unpack a syscall from getstatusoutput
 call = lambda p: getstatusoutput(p)[1]
 
+# a map for all characters in URL search bars to replace
+# most search engines replace " " with "+" but for the most
+# part it seems to work with either/or '+' or '%20'
+char_map = {" ": "%20", "'": "%27", "`": "%60", "%": "%25", "&": "%26",
+            "!": "%21", "@": "%40", "#": "%23", "$": "%24", "+": "%2B",
+            "*": "%2A", "^": "%5E", "(": "%28", ")": "%29", "=": "%3D",
+            "[": "%5B", "]": "%5D", "{": "%7B", "}": "%7D"}
+
 def setup_bot_data(bot_name, logger):
     """
     Set up the bot data folder in the root location
@@ -36,20 +44,41 @@ def setup_bot_data(bot_name, logger):
     except Exception as ex:
         logger("Fail: {}".format(ex))
         return False
-    return True 
+    return True
 
 def read_key(filename):
-    """Read a key file which contains bot tokens"""
-    with open(filename, 'r') as f:
-        return f.read()
+    """
+    Read a key file which contains bot tokens
+    Return false if the key couldn't be read
+    """
+    try:
+        with open(filename, 'r') as f:
+            return f.read()
+    except Exception:
+        pass
+    return False
 
 def pre_text(string):
+    """
+    Encapsulate a string inside a Markdown <pre> container
+    """
     return "```{}```".format(string)
 
-def debug_message(msg):
-    return pre_text("From: {}\nChannel: {}\nMessage: {}".format(msg.author, msg.channel, msg.content))
+def url_replace(string, cmap=char_map):
+    """
+    Safely replace characters with URL friendly characters
+    Optional: feed in a character map to use (defaults to predefined)
+    """
+    s = string
+    for k, v in cmap.items():
+        s.replace(k, v)
+    return s
 
 def bot_folder(bot_name):
+    """
+    Return the path to the bot's data folder
+    ie: bot_folder("dumb-bot") -> botdata/dumb-bot
+    """
     return join(BOT_FOLDER, bot_name)
 
 def read_lines(file_name):
@@ -88,4 +117,5 @@ def create_logger(bot_name):
     def log_func(data_string):
         print("[{}: {}] {}".format(bot_name, strftime("%H:%M:%S", gmtime()), data_string))
     return log_func
-        
+
+# end

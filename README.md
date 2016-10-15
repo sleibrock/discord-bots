@@ -28,7 +28,7 @@ software, move onto the next stage.
 Naturally start with a Git clone
 
 ```
-git clone https://github.com/sleibrock/discord-bots/git
+git clone https://github.com/sleibrock/discord-bots.git
 ```
 
 After that we need to enter the directory and run some 

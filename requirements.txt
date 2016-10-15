@@ -1,6 +1,16 @@
 aiohttp==0.21.6
 beautifulsoup4==4.5.1
 chardet==2.3.0
+cycler==0.10.0
 discord.py==0.11.0
+matplotlib==1.5.3
+mpmath==0.19
+numpy==1.11.2
+pyparsing==2.1.10
+python-dateutil==2.5.3
+pytz==2016.7
 requests==2.11.1
+scipy==0.18.1
+six==1.10.0
+sympy==1.0
 websockets==3.1

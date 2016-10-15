@@ -71,7 +71,7 @@ async def on_ready():
     return logger("Connection status: {}".format(client.is_logged_in))
 
 @client.event
-async def on_error(msg):
+async def on_error(msg, *args, **kwargs):
     """
     When bot receives a fatal websocket error, close the
     reading thread down and close the client

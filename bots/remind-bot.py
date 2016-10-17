@@ -199,8 +199,7 @@ async def send_message(uid, msg):
 
 if __name__ == "__main__":
     try:
-        argv.pop(0)
-        key = argv.pop(0)
+        key = argv[1]
         loop = asyncio.get_event_loop()
         tasks = [scan_reminders(), client.start(read_key(key))]
         loop.run_until_complete(asyncio.gather(*tasks))
@@ -216,6 +215,6 @@ if __name__ == "__main__":
         loop.run_until_complete(client.logout())
         loop.stop()
         loop.close()
-        quit()
+    quit()
 
 # end

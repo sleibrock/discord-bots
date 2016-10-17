@@ -135,7 +135,7 @@ async def osfrog(*args):
             ":frog: le balanced :fish: man :frog:",
             ":frog: +1 :shield: armor :frog:",
             ":frog: :dragon: Illusory orb speed increased by 1 :frog:",
-            ":frog: Vacuum​ cooldown rescaled from 28.0 seconds to 28 seconds :frog:",
+            ":frog: Vacuum cooldown rescaled from 28.0 seconds to 28 seconds :frog:",
             ":frog: le balanced :cloud_tornado: man :frog:",
             ":frog: SEEMS GOOD TO ME :frog:",
             ":frog: le balanced 1050 :dragon: lance attack range :frog:",
@@ -144,8 +144,7 @@ async def osfrog(*args):
 
 if __name__ == "__main__":
     try:
-        argv.pop(0)
-        key = argv.pop(0)
+        key = argv[1]
         client.run(read_key(key))
     except Exception as e:
         logger("Whoops! {}".format(e))
@@ -153,6 +152,8 @@ if __name__ == "__main__":
         logger("Leaving this existence behind")
     except KeyboardInterrupt:
         logger("Ouch!")
+    finally:
+        logger("Exiting")
     quit()
 
 # end

@@ -13,6 +13,7 @@ from subprocess import getstatusoutput
 from time import strftime, gmtime
 from os import mkdir, listdir
 from os.path import isfile, isdir, join
+from ast import literal_eval
 
 # Bot local data information
 BOT_FOLDER = "botdata"
@@ -27,6 +28,20 @@ char_map = {" ": "%20", "'": "%27", "`": "%60", "%": "%25", "&": "%26",
             "!": "%21", "@": "%40", "#": "%23", "$": "%24", "+": "%2B",
             "*": "%2A", "^": "%5E", "(": "%28", ")": "%29", "=": "%3D",
             "[": "%5B", "]": "%5D", "{": "%7B", "}": "%7D"}
+
+# I'm trying to stop malicious searches from my Pi ;_;
+bad_words = ["fuck", "cock", "child", "kiddy", "porn", "pron",
+             "masturbate", "shit", "piss", "anal", "cum", "wank"]
+
+# This will probably never catch all the things I really want to stop
+bad_code = ["while", "for", "import", "lambda", "eval", "exec", "compile",
+            "*", "+", "-", "/", "_", "raise", "Exception", ]
+
+def contains_badwords(string):
+    """
+    Return whether a string contains bad words
+    """
+    return any([x in string for x in bad_words])
 
 def setup_bot_data(bot_name, logger):
     """

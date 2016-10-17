@@ -7,15 +7,15 @@
 ;; Step 2: check whether a thread has been finished or not
 ;; Step 3: if a thread is dead, re-activate the thread with the original bot
 ;; Step 4: sleep for a little bit before re-checking threads
-;; Step 5: every 24 hours, restart each bot thread
+;; Step 5: every 72 hours, restart each bot thread
 
 ;; Define bots here - file to execute and their keys
 (define bots
   (vector
-   (list "python" "bots/dumb-bot.py"   "dumb-bot.key")
-   (list "python" "bots/remind-bot.py" "remind-bot.key")
-   (list "python" "bots/graph-bot.py"  "graph-bot.key")
-   ))
+    (list "python" "bots/dumb-bot.py"   "dumb-bot.key")
+    (list "python" "bots/remind-bot.py" "remind-bot.key")
+    (list "python" "bots/graph-bot.py"  "graph-bot.key")
+    ))
 
 ;; Functions ################################################################
 ;; Convert a bot struct into an executable string
@@ -50,16 +50,18 @@
 
 ;; Thread assassin to restart threads every 72 hours
 ;; Assurance that each thread will always be running
-(thread
- (λ ()
-   (define (loop)
-     (sleep 259200)
-     (displayln "Beginning assassination")
-     (for ([x (in-range total-bots)])
-       (kill-bot x))
-     (displayln "Assassin going to sleep")
-     (loop))
-   (loop)))
+(define assassin
+  (thread
+   (λ ()
+     (displayln "Assassin thread started")
+     (define (loop)
+       (sleep 259200)
+       (displayln "Beginning assassination")
+       (for ([x (in-range total-bots)])
+         (kill-bot x))
+       (displayln "Assassin going to sleep")
+       (loop))
+     (loop))))
 
 ;; Main loop and re-activation thread
 (define main-t
@@ -74,4 +76,6 @@
        (loop))
      (loop))))
 
+; basically an infinite loop/wait
 (thread-wait main-t)
+

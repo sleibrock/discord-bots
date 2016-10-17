@@ -7,7 +7,7 @@ from requests import get as re_get
 from random import randint, choice
 
 help_msg = """A Bot that doesn't do a whole lot
-https://github.com/sleibrock/discord-bots
+https://github.com/sleibrock/discord-bots/blob/master/bot-command-guide.md
 """
 
 bot_name = "dumb-bot"
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger("Ouch!")
     finally:
-        logger("Exiting")
+        logger("Exiting\n")
     quit()
 
 # end

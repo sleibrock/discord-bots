@@ -12,7 +12,7 @@ This will probably eat up 100MB of memory
 
 from botinfo import *
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg') # only way to render without an Xserver running
 from sympy import sympify, Abs
 from sympy.plotting import plot, plot3d
 from sympy.utilities.lambdify import lambdify
@@ -47,7 +47,7 @@ def monkey_patch_function(expr):
     """
     return expr.replace(sympify("abs(x)").func, Abs)
 
-def create_plot(expr, s):
+def create_plot(expr, s, color='b'):
     """
     Create a plot based on whether it's 1-variable or 2-variable
     """
@@ -56,14 +56,15 @@ def create_plot(expr, s):
         p = plot(expr, (var1, s["xmin"], s["xmax"]),
                      xlim=(s["xmin"], s["xmax"]),
                      ylim=(s["ymin"], s["ymax"]),
-                     legend=True, show=False)
+                     legend=True, show=False,
+                     line_color=color)
     elif len(expr.free_symbols) == 2:
         var1, var2 = list(expr.free_symbols)
         p = plot3d(expr, (var1, s["xmin"], s["xmax"]),
                          (var2, s["ymin"], s["ymax"]),
                          xlim=(s["xmin"], s["xmax"]),
                          ylim=(s["ymin"], s["ymax"]),
-                         legend=True, show=False)
+                         title=str(expr), show=False)
     else:
         raise IndexError("Too many or too little variables")
     return p
@@ -75,18 +76,19 @@ async def on_message(msg):
     Map a keyword to a function and pass the message values to the func
     """
     splits = msg.content.lower().strip().split(" ")
-    key = splits.pop(0)
+    k = splits.pop(0)
     rest = " ".join(splits) if len(splits) > 0 else ""
     args = [rest, msg.id, msg.channel]
-    binds = {'!graph'   : graph,
-             '!graphc'  : graphc,
-             '!calculus': calculus,
-             '!matrix'  : matrix,}
-    if key in binds:
+    binds = {'!graph'    : graph,
+             '!graphc'   : graphc,
+             '!integrate': integrate,
+             '!derive'   : derive,
+             '!matrix'   : matrix,}
+    if k in binds:
         if not len(rest):
-            return await client.send_message(args[2], pre_text(binds[key].__doc))
+            return await client.send_message(args[2], pre_text(binds[k].__doc__))
         else:
-            return await binds[key](*args)
+            return await binds[k](*args)
     return
 
 async def graph(msg, mid, mch):
@@ -123,7 +125,7 @@ async def graph(msg, mid, mch):
 async def graphc(msg, mid, mch):
     """
     Graph a complex equation (using mpmath functions and plotting)
-    Equations should only contain one variable
+    Equations should map to the complex domain
     Ex: !graphc gamma(x)
     """
     fname = bot_data("{}.png".format(mid))
@@ -143,12 +145,44 @@ async def graphc(msg, mid, mch):
         logger("!graphc: {}".format(ex))
     return await client.send_message(mch, "Failed to render graph")
 
-async def calculus(msg, mid, mch):
+async def calculus(msg, mid, mch, lam, col):
     """
-    Plot a function, it's first derivative, and it's first anti-derivative
-    TODO: this one but it shouldn't take forever
+    Base function to perform some kind of calculus
+    :lam is the type of operation we want, should be a lambda function
+    :col is the color of the plot we want to have
     """
-    return await client.send_message(mch, "Not implemented")
+    s = {'xmax':10.0, 'xmin':-10.0,
+         'ymax':10.0, 'ymin':-10.0,}
+    fname = bot_data("{}.png".format(mid))
+    try:
+        firstp = msg.split(",")
+        func = firstp[0]
+        expr = monkey_patch_function(sympify(func))
+        var = list(expr.free_symbols)[0]
+        graph = create_plot(expr, s)
+        graph.extend(create_plot(lam(expr), s, color=col))
+        graph.save(fname)
+        await client.send_file(mch, fname)
+        return
+    except Exception as ex:
+        logger("!calculus: {}".format(ex))
+    return await client.send_message(mch, "Failed to render graph")
+
+def integrate(msg, mid, mch):
+    """
+    Integrate a given function to yield it's anti-derivative
+    Function must be continuous, and all results technically have a hidden constant
+    Ex: !integrate cos(x)**2
+    """
+    return calculus(msg, mid, mch, lambda e: e.integrate(), 'r')
+
+def derive(msg, mid, mch):
+    """
+    Derive a given function to yield it's first derivative
+    Note: must be a continuous function
+    Ex: !derive x^3
+    """
+    return calculus(msg, mid, mch, lambda e: e.diff(), 'g')
 
 async def matrix(msg, mid, mch):
     """

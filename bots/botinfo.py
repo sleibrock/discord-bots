@@ -77,7 +77,7 @@ def pre_text(string):
     """
     Encapsulate a string inside a Markdown <pre> container
     """
-    return "```{}```".format(string)
+    return "```{}```".format(string.rstrip().strip("\n"))
 
 def url_replace(string, cmap=char_map):
     """

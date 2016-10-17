@@ -129,7 +129,7 @@ async def graphc(msg, mid, mch):
     Ex: !graphc gamma(x)
     """
     fname = bot_data("{}.png".format(mid))
-    sample_size = 10000
+    sample_size = 1000
     try:
         firstp = msg.split(",")
         func = firstp[0]

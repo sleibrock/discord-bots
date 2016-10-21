@@ -13,10 +13,12 @@ This will probably eat up 100MB of memory
 from botinfo import *
 import matplotlib
 matplotlib.use('Agg') # only way to render without an Xserver running
+import matplotlib.pylab as plt
 from sympy import sympify, Abs
 from sympy.plotting import plot, plot3d
 from sympy.utilities.lambdify import lambdify
 from mpmath import cplot
+from numpy import matrix as np_matrix
 from os import remove as f_remove
 from ast import literal_eval
 
@@ -24,6 +26,7 @@ bot_name = "graph-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
 bot_data = create_filegen(bot_name)
+sample_size = 2000 # used for complex graphing
 
 @client.event
 async def on_ready():
@@ -44,20 +47,23 @@ def monkey_patch_function(expr):
     """
     Name says it all
     Monkey patch any functions with bad func names (abs -> Abs)
+    If anything else needs to be fixed, goes here
     """
     return expr.replace(sympify("abs(x)").func, Abs)
 
 def create_plot(expr, s, color='b'):
     """
     Create a plot based on whether it's 1-variable or 2-variable
+    Raise Index error if we don't have any variables, or more than 2
+    (ie: we can't graph constants, which sucks, but whatever who wants that)
     """
     if len(expr.free_symbols) == 1:
         var1 = list(expr.free_symbols)[0]
         p = plot(expr, (var1, s["xmin"], s["xmax"]),
-                     xlim=(s["xmin"], s["xmax"]),
-                     ylim=(s["ymin"], s["ymax"]),
-                     legend=True, show=False,
-                     line_color=color)
+                       xlim=(s["xmin"], s["xmax"]),
+                       ylim=(s["ymin"], s["ymax"]),
+                       legend=True, show=False,
+                       line_color=color)
     elif len(expr.free_symbols) == 2:
         var1, var2 = list(expr.free_symbols)
         p = plot3d(expr, (var1, s["xmin"], s["xmax"]),
@@ -80,7 +86,7 @@ async def on_message(msg):
     rest = " ".join(splits) if len(splits) > 0 else ""
     args = [rest, msg.id, msg.channel]
     binds = {'!graph'    : graph,
-             '!graphc'   : graphc,
+             '!complex'  : graphc,
              '!integrate': integrate,
              '!derive'   : derive,
              '!matrix'   : matrix,}
@@ -126,10 +132,9 @@ async def graphc(msg, mid, mch):
     """
     Graph a complex equation (using mpmath functions and plotting)
     Equations should map to the complex domain
-    Ex: !graphc gamma(x)
+    Ex: !complex gamma(x)
     """
     fname = bot_data("{}.png".format(mid))
-    sample_size = 1000
     try:
         firstp = msg.split(",")
         func = firstp[0]
@@ -163,6 +168,7 @@ async def calculus(msg, mid, mch, lam, col):
         graph.extend(create_plot(lam(expr), s, color=col))
         graph.save(fname)
         await client.send_file(mch, fname)
+        f_remove(fname)
         return
     except Exception as ex:
         logger("!calculus: {}".format(ex))
@@ -186,10 +192,27 @@ def derive(msg, mid, mch):
 
 async def matrix(msg, mid, mch):
     """
-    Plot a given matrix using Numpy matrices and ast.literal_eval
-    TODO: make it happen?
+    Interpret a user string, convert it to a list and graph it as a matrix
+    Uses ast.literal_eval to parse input into a list
     """
-    return await client.send_message(mch, "Not implemented")
+    fname = bot_data("{}.png".format(mid))
+    try:
+        list_input = literal_eval(msg)
+        if not isinstance(list_input, list):
+            raise ValueError("Not a list")
+        m = np_matrix(list_input)
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        ax.set_aspect('equal')
+        plt.imshow(m, interpolation='nearest', cmap=plt.cm.ocean)
+        plt.colorbar()
+        plt.savefig(fname)
+        await client.send_file(mch, fname)
+        f_remove(fname)
+        return
+    except Exception as ex:
+        logger("!matrix: {}".format(ex))
+    return await client.send_message(mch, "Failed to render graph")
 
 if __name__ == "__main__":
     try:

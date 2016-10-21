@@ -84,22 +84,7 @@ async def clean_messages(msg, memb, mch):
     return await client.send_message(mch, "Failed to execute action")
 
 if __name__ == "__main__":
-    try:
-        key = argv[1]
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(client.start(read_key(key)))
-    except Exception as e:
-        logger("Whoops! {}".format(e))
-    except SystemExit:
-        logger("Leaving this existence behind")
-    except KeyboardInterrupt:
-        logger("Ouch!")
-    finally:
-        logger("Exiting")
-        loop.run_until_complete(client.logout())
-        loop.stop()
-        loop.close()
-    quit()
+    run_the_bot(client, argv, logger)
 
 # end
 

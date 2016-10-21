@@ -37,6 +37,16 @@ bad_words = ["fuck", "cock", "child", "kiddy", "porn", "pron",
 bad_code = ["while", "for", "import", "lambda", "eval", "exec", "compile",
             "*", "+", "-", "/", "_", "raise", "Exception", ]
 
+def display_url_when_no_servers(client, logger):
+    """
+    Print a clickable URL when the bot sees no servers active
+    This is to defeat the previous method of creating bot links
+    """
+    if len(client.servers) == 0:
+        logger("Link: {}".format(discord.utils.oauth_url(client.user.id)))
+    return
+    
+
 def contains_badwords(string):
     """
     Return whether a string contains bad words
@@ -132,5 +142,28 @@ def create_logger(bot_name):
     def log_func(data_string):
         print("[{}: {}] {}".format(bot_name, strftime("%H:%M:%S", gmtime()), data_string))
     return log_func
+
+# One function to bind them all (it's a bot runner)
+def run_the_bot(client, argv, loggy):
+    """
+    Abstract to keep the bot running function in one place
+    Only works when each bot uses the same Client type object
+    """
+    try:
+        key = argv[1]
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(client.start(read_key(key)))
+    except Exception as e:
+        loggy("Whoop! {}".format(e))
+    except SystemExit:
+        loggy("SystemExit, quitting")
+    except KeyboardInterrupt:
+        loggy("Keyboard Int, quitting")
+    finally:
+        loggy("Exiting")
+        loop.run_until_complete(client.logout())
+        loop.stop()
+        loop.close()
+        quit()
 
 # end

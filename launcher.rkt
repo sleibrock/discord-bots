@@ -68,12 +68,13 @@
 (define main-t
   (thread
    (λ ()
+     (sleep 30) ; wait for bots to start before looping
      (define (loop)
+       (sleep 300) ; number of seconds the gravekeeper should sleep
        (displayln "Beginning Gravekeeper sweep...")
        (for ([x (in-range total-bots)])
          (re-animate x))
        (displayln "Sleeping Gravekeeper...")
-       (sleep 300) ; number of seconds the gravekeeper should sleep
        (loop))
      (loop))))
 

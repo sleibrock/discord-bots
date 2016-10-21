@@ -198,23 +198,6 @@ async def send_message(uid, msg):
     return False
 
 if __name__ == "__main__":
-    try:
-        key = argv[1]
-        loop = asyncio.get_event_loop()
-        tasks = [scan_reminders(), client.start(read_key(key))]
-        loop.run_until_complete(asyncio.gather(*tasks))
-    except Exception as e:
-        logger("Whoops! {}".format(e))
-    except SystemExit:
-        logger("Leaving this existence behind")
-    except KeyboardInterrupt:
-        logger("Ouch!")
-    finally:
-        logger("Exiting")
-        settings["readloop"] = False
-        loop.run_until_complete(client.logout())
-        loop.stop()
-        loop.close()
-    quit()
+    run_the_bot(client, argv, logger)
 
 # end

@@ -12,9 +12,10 @@
 ;; Define bots here - file to execute and their keys
 (define bots
   (vector
-    (list "python" "bots/dumb-bot.py"   "dumb-bot.key")
-    (list "python" "bots/remind-bot.py" "remind-bot.key")
-    (list "python" "bots/graph-bot.py"  "graph-bot.key")
+    (list "python" "bots/dumb-bot.py"    "dumb-bot.key")
+    (list "python" "bots/remind-bot.py"  "remind-bot.key")
+    (list "python" "bots/graph-bot.py"   "graph-bot.key")
+    (list "python" "bots/janitor-bot.py" "janitor-bot.key")
     ))
 
 ;; Functions ################################################################

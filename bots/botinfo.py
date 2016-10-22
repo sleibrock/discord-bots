@@ -10,7 +10,7 @@ from discord.ext import commands
 import asyncio
 from sys import argv
 from subprocess import getstatusoutput
-from time import strftime, gmtime
+from time import strftime, localtime
 from os import mkdir, listdir
 from os.path import isfile, isdir, join
 from ast import literal_eval
@@ -45,7 +45,6 @@ def display_url_when_no_servers(client, logger):
     if len(client.servers) == 0:
         logger("Link: {}".format(discord.utils.oauth_url(client.user.id)))
     return
-    
 
 def contains_badwords(string):
     """
@@ -136,11 +135,11 @@ def create_logger(bot_name):
     this ambiguates bot output as to see which bot crashes
     rather than output being boggled together
 
-    [dumb-bot: 10:32:48] I crashed
-    [another-bot: 10:32:49] I didn't
+    [dumb-bot:     10:32:48] I crashed
+    [another-bot:  10:32:49] I didn't
     """
     def log_func(data_string):
-        print("[{}: {}] {}".format(bot_name, strftime("%H:%M:%S", gmtime()), data_string))
+        print("[{0:<12} {1}] {2}".format("{}:".format(bot_name), strftime("%H:%M:%S", localtime()), data_string))
     return log_func
 
 # One function to bind them all (it's a bot runner)

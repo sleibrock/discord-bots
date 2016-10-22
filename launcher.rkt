@@ -7,7 +7,7 @@
 ;; Step 2: check whether a thread has been finished or not
 ;; Step 3: if a thread is dead, re-activate the thread with the original bot
 ;; Step 4: sleep for a little bit before re-checking threads
-;; Step 5: every 72 hours, restart each bot thread
+;; Step 5: every 72 hours, restart each bot thread (if they make it that far)
 
 ;; Define bots here - file to execute and their keys
 (define bots
@@ -17,8 +17,16 @@
     (list "python" "bots/graph-bot.py"   "graph-bot.key")
     (list "python" "bots/janitor-bot.py" "janitor-bot.key")
     ))
+(define total-bots (vector-length bots))
 
-;; Functions ################################################################
+;; Logger function to print statements to terminal
+(define (logger str)
+  (define cd (seconds->date (current-seconds))) 
+  (displayln
+   (apply (λ (x y z) (format "[supervisor:  ~a:~a:~a] ~a" x y z str))
+          (map (λ (i) (if (< i 10) (format "0~a" i) (format "~a" i)))
+               (list (date-hour cd) (date-minute cd) (date-second cd))))))
+
 ;; Convert a bot struct into an executable string
 (define (bot->command bot) (string-join bot " "))
 
@@ -26,24 +34,23 @@
 (define (start-bot bot-id)
   (thread
    (λ ()
-     (displayln (format "Starting bot ~a" bot-id))
+     (logger (format "Starting bot ~a" bot-id))
      (system (bot->command (vector-ref bots bot-id)))
-     (displayln (format "Bot ID ~a ended unexpectedly" bot-id)))))
+     (logger (format "Bot ID ~a ended unexpectedly" bot-id)))))
 
 ;; The necromancer function to create new threads from dead matter
 (define (re-animate id)
-  (displayln (format "Checking thread ~a" id))
+  (logger (format "Checking thread ~a" id))
   (when (thread-dead? (vector-ref threads id))
-    (displayln (format "Bringing thread ~a back to life" id))
+    (logger (format "Bringing thread ~a back to life" id))
     (vector-set! threads id (start-bot id))))
 
 (define (kill-bot id)
-  (displayln (format "Assassinating thread ~a" id))
+  (logger (format "Assassinating thread ~a" id))
   (kill-thread (vector-ref threads id)))
 
 ;; Variables ###############################################################
 ;; Total number of bots we have to manage
-(define total-bots (vector-length bots))
 
 ;; The bot threads to maintain
 (define threads
@@ -54,13 +61,13 @@
 (define assassin
   (thread
    (λ ()
-     (displayln "Assassin thread started")
+     (logger "Assassin thread started")
      (define (loop)
        (sleep 259200)
-       (displayln "Beginning assassination")
+       (logger "Beginning assassination")
        (for ([x (in-range total-bots)])
          (kill-bot x))
-       (displayln "Assassin going to sleep")
+       (logger "Assassin going to sleep")
        (loop))
      (loop))))
 
@@ -71,10 +78,10 @@
      (sleep 30) ; wait for bots to start before looping
      (define (loop)
        (sleep 300) ; number of seconds the gravekeeper should sleep
-       (displayln "Beginning Gravekeeper sweep...")
+       (logger "Beginning Gravekeeper sweep...")
        (for ([x (in-range total-bots)])
          (re-animate x))
-       (displayln "Sleeping Gravekeeper...")
+       (logger "Sleeping Gravekeeper...")
        (loop))
      (loop))))
 

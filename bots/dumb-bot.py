@@ -47,6 +47,7 @@ async def on_message(msg):
         "!rtd"     : rtd,
         "!ddg"     : ddg,
         "!yt"      : yt,
+        "!osfrog"  : osfrog,
         }
     if k in binds:
         return await binds[k](*args)

@@ -129,18 +129,13 @@ def create_filegen(bot_name):
         return join(BOT_FOLDER, bot_name, filename)
     return bot_file
 
-def create_logger(bot_name):
-    """
-    This sets up a logger to be used in the bot threading
-    this ambiguates bot output as to see which bot crashes
-    rather than output being boggled together
+class Logger(object):
+    def __init__(self, name="bot", color="1"):
+        self.name, self.color = name, color
 
-    [dumb-bot:     10:32:48] I crashed
-    [another-bot:  10:32:49] I didn't
-    """
-    def log_func(data_string):
-        print("[{0:<12} {1}] {2}".format("{}:".format(bot_name), strftime("%H:%M:%S", localtime()), data_string))
-    return log_func
+    def __call__(self, log_str=""):
+        print("[\033[38;5;{3}m{0:<12}\033[0m {1}] {2}".format("{}:".format(self.name), strftime("%H:%M:%S", localtime()), log_str, self.color))
+        return True
 
 # One function to bind them all (it's a bot runner)
 def run_the_bot(client, argv, loggy):
@@ -150,6 +145,7 @@ def run_the_bot(client, argv, loggy):
     """
     try:
         key = argv[1]
+        loggy.color = argv[2]
         loop = asyncio.get_event_loop()
         loop.run_until_complete(client.start(read_key(key)))
     except Exception as e:

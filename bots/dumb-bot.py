@@ -12,7 +12,7 @@ https://github.com/sleibrock/discord-bots/blob/master/docs/bot-command-guide.md
 
 bot_name = "dumb-bot"
 client = discord.Client()
-logger = create_logger(bot_name)
+logger = Logger(bot_name)
 
 @client.event
 async def on_ready():

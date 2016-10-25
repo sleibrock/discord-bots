@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # bot info and whatever who cares
 bot_name = "remind-bot"
 client = discord.Client()
-logger = create_logger(bot_name)
+logger = Logger(bot_name)
 bot_data = create_filegen(bot_name)
 
 # only support weeks, days and hours right now

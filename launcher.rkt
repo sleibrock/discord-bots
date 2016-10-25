@@ -9,13 +9,13 @@
 ;; Step 4: sleep for a little bit before re-checking threads
 ;; Step 5: every 72 hours, restart each bot thread (if they make it that far)
 
-;; Define bots here - file to execute and their keys
+;; Define bots here - file to execute, keys, colors for logging
 (define bots
   (vector
-    (list "python" "bots/dumb-bot.py"    "dumb-bot.key")
-    (list "python" "bots/remind-bot.py"  "remind-bot.key")
-    (list "python" "bots/graph-bot.py"   "graph-bot.key")
-    (list "python" "bots/janitor-bot.py" "janitor-bot.key")
+    (list "python" "bots/dumb-bot.py"    "dumb-bot.key" "1")
+    (list "python" "bots/remind-bot.py"  "remind-bot.key" "2")
+    (list "python" "bots/graph-bot.py"   "graph-bot.key" "3")
+    (list "python" "bots/janitor-bot.py" "janitor-bot.key" "4")
     ))
 (define total-bots (vector-length bots))
 
@@ -23,7 +23,7 @@
 (define (logger str)
   (define cd (seconds->date (current-seconds))) 
   (displayln
-   (apply (λ (x y z) (format "[supervisor:  ~a:~a:~a] ~a" x y z str))
+   (apply (λ (x y z) (format "[\033[38;5;9msupervisor\033[0m:  ~a:~a:~a] ~a" x y z str))
           (map (λ (i) (if (< i 10) (format "0~a" i) (format "~a" i)))
                (list (date-hour cd) (date-minute cd) (date-second cd))))))
 

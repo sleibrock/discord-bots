@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # bot info and whatever who cares
 bot_name = "remind-bot"
 client = discord.Client()
-logger = Logger(bot_name)
+logger = create_logger(bot_name)
 bot_data = create_filegen(bot_name)
 
 # only support weeks, days and hours right now
@@ -18,11 +18,11 @@ units.extend([t[:-1] for t in units])
 
 # settings
 settings = {"readloop":True,
-            "max_rem": 5
+            "max_rem": 10,
             }
 
 helpmsg = pre_text("""Remind-bot
-Hold up to 5 reminders for remind-bot to remind you about
+Hold up to 10 reminders for remind-bot to remind you about
 Usage: <message> !! <time span>
 Example: dont drink that poison!! 3 hours 20 minutes
 Clear:   !!clear
@@ -87,7 +87,7 @@ async def on_message(msg):
     For commands we check if certain ones are equal length to desired commands
     """
     auth = str(msg.author.id)
-    m = msg.content.lower().strip()
+    m = msg.content.strip()
 
     if "!!" not in m:
         return
@@ -112,7 +112,7 @@ async def on_message(msg):
     dmsg, tmsg = m.split("!!")
 
     # Transform strings that look like 2d 3h into timedeltas
-    splits = tmsg.strip().split(" ")
+    splits = tmsg.lower().strip().split(" ")
 
     # Stop if no time span was given (ie: empty list or less than 2 units of text)
     if not splits or len(splits) < 2:

@@ -12,10 +12,10 @@
 ;; Define bots here - file to execute, keys, colors for logging
 (define bots
   (vector
-    (list "python" "bots/dumb-bot.py"    "dumb-bot.key" "1")
-    (list "python" "bots/remind-bot.py"  "remind-bot.key" "2")
-    (list "python" "bots/graph-bot.py"   "graph-bot.key" "3")
-    (list "python" "bots/janitor-bot.py" "janitor-bot.key" "4")
+    (list "python"    "bots/dumb-bot.py"    "dumb-bot.key")
+    (list "python"  "bots/remind-bot.py"  "remind-bot.key")
+    (list "python"   "bots/graph-bot.py"   "graph-bot.key")
+    (list "python" "bots/janitor-bot.py" "janitor-bot.key")
     ))
 (define total-bots (vector-length bots))
 
@@ -23,7 +23,7 @@
 (define (logger str)
   (define cd (seconds->date (current-seconds))) 
   (displayln
-   (apply (λ (x y z) (format "[\033[38;5;9msupervisor\033[0m:  ~a:~a:~a] ~a" x y z str))
+   (apply (λ (x y z) (format "[\033[38;5;9msupervisor\033[0m  @ ~a:~a:~a] ~a" x y z str))
           (map (λ (i) (if (< i 10) (format "0~a" i) (format "~a" i)))
                (list (date-hour cd) (date-minute cd) (date-second cd))))))
 
@@ -45,25 +45,23 @@
     (logger (format "Bringing thread ~a back to life" id))
     (vector-set! threads id (start-bot id))))
 
+;; Function to kill a target thread via it's ID
 (define (kill-bot id)
   (logger (format "Assassinating thread ~a" id))
   (kill-thread (vector-ref threads id)))
 
-;; Variables ###############################################################
-;; Total number of bots we have to manage
-
 ;; The bot threads to maintain
-(define threads
-  (build-vector total-bots start-bot))
+(define threads (build-vector total-bots start-bot))
 
-;; Thread assassin to restart threads every 72 hours
+;; Thread assassin to restart threads every 24 hours
 ;; Assurance that each thread will always be running
+;; Also frees up leftover memory from programs running for a long time
 (define assassin
   (thread
    (λ ()
      (logger "Assassin thread started")
      (define (loop)
-       (sleep 259200)
+       (sleep 86400)
        (logger "Beginning assassination")
        (for ([x (in-range total-bots)])
          (kill-bot x))

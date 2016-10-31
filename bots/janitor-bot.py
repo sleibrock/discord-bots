@@ -12,7 +12,7 @@ from botinfo import *
 
 bot_name = "janitor-bot"
 client = discord.Client()
-logger = Logger(bot_name)
+logger = create_logger(bot_name)
 
 @client.event
 async def on_ready():

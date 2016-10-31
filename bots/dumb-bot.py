@@ -12,7 +12,7 @@ https://github.com/sleibrock/discord-bots/blob/master/docs/bot-command-guide.md
 
 bot_name = "dumb-bot"
 client = discord.Client()
-logger = Logger(bot_name)
+logger = create_logger(bot_name)
 
 @client.event
 async def on_ready():
@@ -46,6 +46,7 @@ async def on_message(msg):
         "!update"  : update,
         "!rtd"     : rtd,
         "!ddg"     : ddg,
+        "!wa"      : wolfram_alpha,
         "!yt"      : yt,
         "!osfrog"  : osfrog,
         }
@@ -144,6 +145,13 @@ async def yt(msg, mid, mch):
     except Exception as ex:
         logger("Fail: {}".format(ex))
     return await client.send_message(mch, "Failed to request the search")
+
+async def wolfram_alpha(msg, mid, mch):
+    """
+    Return a link to a Wolfram Alpha search
+    Doesn't do anything special
+    """
+    return
 
 async def osfrog(msg, mid, mch):
     """

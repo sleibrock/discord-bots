@@ -24,7 +24,7 @@ from ast import literal_eval
 
 bot_name = "graph-bot"
 client = discord.Client()
-logger = Logger(bot_name)
+logger = create_logger(bot_name)
 bot_data = create_filegen(bot_name)
 sample_size = 2000 # used for complex graphing
 

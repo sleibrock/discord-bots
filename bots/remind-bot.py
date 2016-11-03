@@ -88,6 +88,8 @@ async def on_message(msg):
     """
     auth = str(msg.author.id)
     m = msg.content.strip()
+    if contains_badwords(m.lower()):
+        return
 
     if "!!" not in m:
         return

@@ -35,6 +35,8 @@ async def on_message(msg):
     """
     Dispatch all the messages to commands
     """
+    if contains_badwords(msg.content.lower()): # dispatch level badword censor
+        return
     splits = msg.content.lower().strip().split(" ")
     k = splits.pop(0)
     rest = " ".join(splits) if len(splits) > 0 else ""

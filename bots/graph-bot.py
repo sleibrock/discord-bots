@@ -81,6 +81,8 @@ async def on_message(msg):
     Dispatch commands to the respective functions
     Map a keyword to a function and pass the message values to the func
     """
+    if contains_badwords(msg.content.lower()):
+        return
     splits = msg.content.lower().strip().split(" ")
     k = splits.pop(0)
     rest = " ".join(splits) if len(splits) > 0 else ""

@@ -132,7 +132,7 @@ def create_logger(bot_name):
     """
     color = 16 + (sum([ord(c) for c in bot_name]) % 240)
     def logger(msg):
-        print("[\033[38;5;{3}m{0:<11}\033[0m @ {1}] {2}".format(
+        print("[\033[38;5;{3}m{0:<12}\033[0m @ {1}] {2}".format(
             bot_name, strftime("%H:%M:%S", localtime()), msg, color))
         return True
     return logger

@@ -8,7 +8,6 @@ Packages to use across bot programs
 import discord
 from discord.ext import commands
 import asyncio
-from sys import argv
 from subprocess import getstatusoutput
 from time import strftime, localtime
 from os import mkdir, listdir
@@ -17,9 +16,13 @@ from ast import literal_eval
 
 # Bot local data information
 BOT_FOLDER = "botdata"
+KEY_FOLDER = "keys"
 
 # shortcut to unpack a syscall from getstatusoutput
 call = lambda p: getstatusoutput(p)[1]
+
+# Prefix to use for automating registering commands
+bot_prefix = "!"
 
 # a map for all characters in URL search bars to replace
 # most search engines replace " " with "+" but for the most
@@ -48,10 +51,44 @@ def contains_badwords(string):
     """
     return any([x in string for x in bad_words])
 
+def setup_all_events(client, bot_name, logger, on_message=True):
+    """
+    Setup all events for the client
+    Run this last after all other functions have
+    been defined and ran through register_command()
+    :on_message can be set to false to ignore the on_message setup()
+    (for bots that don't have an cause/effect schema)
+    """
+    client.event(setup_on_ready(client, bot_name, logger))
+    client.event(setup_on_error(client, logger))
+    if on_message:
+        client.event(setup_on_message())
+    return
+
+def setup_on_ready(client, bot_name, logger):
+    """
+    Automate the on_ready connection process
+    """
+    async def on_ready():
+        if not setup_bot_data(bot_name, logger):
+            client.close()
+            return logger("Failed to set up {}'s folder".format(bot_name))
+        display_url_when_no_servers(client, logger)
+        return logger("Connection status: {}".format(client.is_logged_in))
+    return on_ready
+
+def setup_on_error(client, logger):
+    """
+    Automate the on_error process (it's real simple)
+    """
+    async def on_error(msg, *args, **kwargs):
+        return logger("Discord error: {}".format(msg))
+    return on_error
+
 def setup_bot_data(bot_name, logger):
     """
     Set up the bot data folder in the root location
-    If if can't create the folders, return False
+    If it can't create the folders, return False
     else return True (so our bot can continue)
     """
     try:
@@ -66,13 +103,46 @@ def setup_bot_data(bot_name, logger):
         return False
     return True
 
-def read_key(filename):
+def register_command(func=None, binds={}):
+    """
+    We're gonna use some real bad behavior
+    We're going to store binds inside of the function's default arg
+    When the function is passed None, we return the binds
+    When we pass a function, we register it to the binds
+    Else we return the function we were originally given so
+    we can ensure it acts as a wrapper of the given function
+    """
+    if callable(func):
+        if func.__name__ not in binds:
+            binds["{}{}".format(bot_prefix, func.__name__)] = func
+    elif func is None:
+        return binds
+    return func
+
+def setup_on_message():
+    """
+    Create a basic on_message function to use
+    """
+    async def on_message(msg):
+        if contains_badwords(msg.content.lower()):
+            return
+        splits = msg.content.lower().strip().split(" ")
+        key = splits.pop(0)
+        rest = " ".join(splits) if len(splits) > 0 else ""
+        args = [rest, msg.author.id, msg.channel]
+        binds = register_command()
+        if key in binds:
+            return await binds[key](*args)
+        return
+    return on_message
+
+def read_key(bot_name):
     """
     Read a key file which contains bot tokens
     Return false if the key couldn't be read
     """
     try:
-        with open(filename, 'r') as f:
+        with open(join(KEY_FOLDER, "{}.key".format(bot_name)), 'r') as f:
             return f.read()
     except Exception:
         raise IOError("Can't read key")
@@ -138,15 +208,14 @@ def create_logger(bot_name):
     return logger
 
 # One function to bind them all (it's a bot runner)
-def run_the_bot(client, argv, loggy):
+def run_the_bot(client, bot_name, loggy):
     """
     Abstract to keep the bot running function in one place
     Only works when each bot uses the same Client type object
     """
     try:
-        key = argv[1]
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(client.start(read_key(key)))
+        loop.run_until_complete(client.start(read_key(bot_name)))
     except Exception as e:
         loggy("Whoop! {}".format(e))
     except SystemExit:

@@ -217,7 +217,7 @@ async def matrix(msg, mid, mch):
     return await client.send_message(mch, "Failed to render graph")
 
 if __name__ == "__main__":
-    run_the_bot(client, argv, logger)
+    run_the_bot(client, bot_name, logger)
 
 # end
 

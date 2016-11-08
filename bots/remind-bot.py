@@ -200,6 +200,6 @@ async def send_message(uid, msg):
     return False
 
 if __name__ == "__main__":
-    run_the_bot(client, argv, logger)
+    run_the_bot(client, bot_name, logger)
 
 # end

@@ -14,60 +14,22 @@ bot_name = "dumb-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
 
-@client.event
-async def on_ready():
-    """
-    The function that is consumed upon startup
-    Set vars, check for bot folder existence, etc
-    """
-    if not setup_bot_data(bot_name, logger):
-        client.close()
-        return logger("Failed to set up {}'s folder".format(bot_name))
-    display_url_when_no_servers(client, logger)
-    return logger("Connection status: {}".format(client.is_logged_in))
-
-@client.event
-async def on_error(msg, *args, **kwargs):
-    return logger("Discord error: {}".format(msg))
-
-@client.event
-async def on_message(msg):
-    """
-    Dispatch all the messages to commands
-    """
-    if contains_badwords(msg.content.lower()): # dispatch level badword censor
-        return
-    splits = msg.content.lower().strip().split(" ")
-    k = splits.pop(0)
-    rest = " ".join(splits) if len(splits) > 0 else ""
-    args = [rest, msg.author.id, msg.channel]
-    binds = {
-        "!help"    : help_func,
-        "!mem"     : mem_avail,
-        "!commits" : commits,
-        "!update"  : update,
-        "!rtd"     : rtd,
-        "!ddg"     : ddg,
-        "!wa"      : wolfram_alpha,
-        "!yt"      : yt,
-        "!osfrog"  : osfrog,
-        }
-    if k in binds:
-        return await binds[k](*args)
-    return
-
-async def help_func(msg, mid, mch):
+@register_command
+async def howto(msg, mid, mch):
     """Return a help message"""
     return await client.send_message(mch, pre_text(help_msg))
 
-async def mem_avail(msg, mid, mch):
+@register_command
+async def free(msg, mid, mch):
     """Return a printout of `free -m` to see memory available"""
     return await client.send_message(mch, pre_text(call("free -m")))
 
+@register_command
 async def commits(msg, mid, mch):
     """Print out a `git log --graph --decorate=short --oneline | head -n 5`"""
     return await client.send_message(mch, pre_text(call("git log --decorate=short --graph --oneline | head -n 5")))
 
+@register_command
 async def update(msg, mid, mch):
     """
     Execute a `git pull` to update the code
@@ -83,6 +45,7 @@ async def update(msg, mid, mch):
     client.close()
     return quit()
 
+@register_command
 async def rtd(msg, mid, mch):
     """
     Roll a d<N> di[c]e <X> number of times
@@ -98,6 +61,7 @@ async def rtd(msg, mid, mch):
         logger("Error: {}".format(ex))
     return await client.send_message(mch, "Error: bad input args")
 
+@register_command
 async def ddg(msg, mid, mch):
     """
     Search DuckDuckGo and post the first result
@@ -119,6 +83,7 @@ async def ddg(msg, mid, mch):
         logger("Fail: {}".format(ex))
     return await client.send_message(mch, "Failed to get the search")
 
+@register_command
 async def yt(msg, mid, mch):
     """
     Do a youtube search and yield the first result
@@ -148,13 +113,15 @@ async def yt(msg, mid, mch):
         logger("Fail: {}".format(ex))
     return await client.send_message(mch, "Failed to request the search")
 
-async def wolfram_alpha(msg, mid, mch):
+@register_command
+async def wa(msg, mid, mch):
     """
     Return a link to a Wolfram Alpha search
     Doesn't do anything special
     """
-    return
+    return await client.send_message(mch, "Not implemented yet")
 
+@register_command
 async def osfrog(msg, mid, mch):
     """
     Yet another command that is temporary
@@ -172,8 +139,10 @@ async def osfrog(msg, mid, mch):
             ":frog: ¯\_(ツ)_/¯ :frog:",]
     return await client.send_message(mch, choice(data))
 
+# Last step - register events then run
+setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":
-    run_the_bot(client, argv, logger)
+    run_the_bot(client, bot_name, logger)
 
 # end
 

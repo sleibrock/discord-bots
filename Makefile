@@ -7,4 +7,4 @@ dev:
 setup:
 	pip install -r requirements.txt
 copy_keys:
-	scp *.key steve@alarmpi:~/discord-bots
+	scp -r keys steve@alarmpi:~/discord-bots

@@ -6,5 +6,6 @@ dev:
 	source dev/bin/activate
 setup:
 	pip install -r requirements.txt
+	npm install discordie
 copy_keys:
 	scp -r keys steve@alarmpi:~/discord-bots

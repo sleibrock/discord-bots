@@ -9,6 +9,7 @@
     (list "python"   "bots/remind-bot.py")
     (list "python"    "bots/graph-bot.py")
     (list "python"  "bots/janitor-bot.py")
+    (list "node"    "bots/FishFactBot.js")
     ))
 (define total-bots (vector-length bots)) ; store how many have been set up
 

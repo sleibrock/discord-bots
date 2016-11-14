@@ -3,6 +3,8 @@
 (require racket/string racket/system racket/list)
 (provide
  bots
+ total-bots
+ subproc
  subproc-kill
  start-bot
  reviver
@@ -30,20 +32,24 @@
 
 (define logger (set-logger "gravekeeper " 9))
 
-; A one-arg subprocess-kill wrapper
+;; a quick wrapper function for subprocess 
+(define (subproc p a)
+  (parameterize ([current-subprocess-custodian-mode 'kill])
+    (apply
+     subprocess
+     (append (list (current-output-port) #f 'stdout (find-executable-path p)) a))))
+
+;; A one-arg subprocess-kill wrapper
 (define (subproc-kill subp)
   (subprocess-kill subp #t))
 
 ;; Create a new subprocess and return it
 (define (start-bot bot-id)
-  (parameterize ([current-subprocess-custodian-mode 'kill])
-    (define-values (interp code) (apply values (vector-ref bots bot-id)))
-    (define-values (a b c d)
-      (subprocess
-       (current-output-port) #f 'stdout
-       (find-executable-path interp) code))
-    (logger (format "Initialized Bot ~a on PID ~a" bot-id (subprocess-pid a)))
-    a))
+  (define-values (interp code) (apply values (vector-ref bots bot-id)))
+  (define-values (a b c d)
+    (subproc interp (list code)))
+  (logger (format "Initialized Bot ~a on PID ~a" bot-id (subprocess-pid a)))
+  a)
 
 ;; Revive a subprocess as required
 (define (reviver threads)

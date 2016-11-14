@@ -1,20 +1,15 @@
 #lang racket
 
-(require rackunit rackunit/text-ui "src/supervisor.rkt")
+(require rackunit  "src/supervisor.rkt")
+
+(module+ test (require rackunit))
 
 (define (debug-args program code)
   (match program
     ("node"   (list "-c" code))
     ("python" (list "-m" "py_compile" code))))
 
-(define t
-  (test-suite
-   "Discord Bot Test Suite"
-   #:before (lambda ()
-             (displayln "Beginning tests")
-             (displayln (format "Current directory: ~a" (current-directory))))
-   #:after  (lambda () (displayln "Ending tests"))
-   
+(module+ test
    (test-case
        "Testing ability to kill subprocs"
      (let ([subs
@@ -30,8 +25,9 @@
        (for-each
         (lambda (sub)
           (check-not-eq? 'running (subprocess-status sub)))
-        subs)))
-   
+        subs))))
+
+(module+ test 
    (test-case
        "Testing successful compiles on all bots"
      (let ([subs
@@ -43,8 +39,6 @@
                  a))])
        (check = (length subs) total-bots)
        (sleep 5)
-       (for-each (lambda (sub) (check-eq? 0 (subprocess-status sub))) subs)
-       0))
-   ))
-  
-(run-tests t 'verbose)
+       (for-each (lambda (sub) (check-eq? 0 (subprocess-status sub))) subs))))
+
+; end

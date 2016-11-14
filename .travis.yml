@@ -1,0 +1,32 @@
+language: python
+
+python:
+  - "3.5"
+
+# define Racket's directory
+env:
+  global:
+    - RACKET_DIR=~/racket
+  matrix:
+    - RACKET_VERSION=RELEASE
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y nodejs npm
+  - git clone https://github.com/greghendershott/travis-racket.git
+  - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
+  - export PATH="${RACKET_DIR}/bin:${PATH}" #install-racket.sh can't set for us
+  - . $HOME/.nvm/nvm.sh
+  - nvm install stable
+  - nvm use stable
+  - npm install
+
+install:
+  - make setup
+
+before_script:
+
+script:
+  - make test
+
+after_script:

@@ -51,18 +51,24 @@ def contains_badwords(string):
     """
     return any([x in string for x in bad_words])
 
-def setup_all_events(client, bot_name, logger, on_message=True):
+def setup_all_events(client, bot_name, logger, on_r=None, on_e=None, on_m=None):
     """
-    Setup all events for the client
-    Run this last after all other functions have
-    been defined and ran through register_command()
-    :on_message can be set to false to ignore the on_message setup()
-    (for bots that don't have an cause/effect schema)
+    Setup all events using default events
+    We can pass in custom events to each variable to set those as the events
+    The given events have to be named appropriately (on_message, on_ready, on_error)
     """
-    client.event(setup_on_ready(client, bot_name, logger))
-    client.event(setup_on_error(client, logger))
-    if on_message:
-        client.event(setup_on_message())
+    if on_r is None:
+        client.event(setup_on_ready(client, bot_name, logger))
+    elif callable(on_r):
+        client.event(on_r)
+    if on_e is None:
+        client.event(setup_on_error(client, logger))
+    elif callable(on_e):
+        client.event(on_e)
+    if on_m is None:
+        client.event(setup_on_message(client, logger))
+    elif callable(on_m):
+        client.event(on_m)
     return
 
 def setup_on_ready(client, bot_name, logger):
@@ -119,19 +125,21 @@ def register_command(func=None, binds={}):
         return binds
     return func
 
-def setup_on_message():
+def setup_on_message(client, logger):
     """
     Create a basic on_message function to use
     """
     async def on_message(msg):
         if contains_badwords(msg.content.lower()):
             return
-        splits = msg.content.lower().strip().split(" ")
-        key = splits.pop(0)
+        splits = msg.content.strip().split(" ")
+        key = splits.pop(0).lower()
         rest = " ".join(splits) if len(splits) > 0 else ""
-        args = [rest, msg.author.id, msg.channel]
+        args = [rest, msg]
         binds = register_command()
         if key in binds:
+            if rest.lower().startswith("help"):
+                return await client.send_message(msg.channel, pre_text(binds[key].__doc__))
             return await binds[key](*args)
         return
     return on_message
@@ -152,7 +160,7 @@ def pre_text(string):
     """
     Encapsulate a string inside a Markdown <pre> container
     """
-    return "```{}```".format(string.rstrip().strip("\n"))
+    return "```{}```".format(string.rstrip().strip("\n").replace("\t", ""))
 
 def url_replace(string, cmap=char_map):
     """

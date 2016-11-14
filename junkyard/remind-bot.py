@@ -16,7 +16,7 @@ bot_data = create_filegen(bot_name)
 units = ["weeks", "days", "hours", "minutes"]
 units.extend([t[:-1] for t in units])
 
-# settings
+# settings - used to mutate state across the module
 settings = {"readloop":True,
             "max_rem": 10,
             }
@@ -67,7 +67,6 @@ async def on_ready():
     if not setup_bot_data(bot_name, logger):
         logger("Failed to set up {}'s folder".format(bot_name))
         client.close()
-    settings["readloop"] = True
     return logger("Connection status: {}".format(client.is_logged_in))
 
 @client.event
@@ -142,8 +141,7 @@ async def on_message(msg):
     if not isfile(bot_data(auth)):
         lines = []
     else:
-        with open(bot_data(auth), "r") as f:
-            lines = f.readlines()
+        lines = read_lines(bot_data(auth))
         if len(lines) >= settings["max_rem"]:
             return await client.send_message(msg.author, "Full! Clear your list with '!!clear'")
 

@@ -1,15 +1,21 @@
 #lang racket/base
 
 (require racket/string racket/system racket/list)
+(provide
+ bots
+ subproc-kill
+ start-bot
+ reviver
+ main
+ )
 
 ;; Define bots here - file to execute, keys, colors for logging
 (define bots
   (vector
-    (list "python"     "bots/dumb-bot.py")
-    (list "python"   "bots/remind-bot.py")
-    (list "python"    "bots/graph-bot.py")
-    (list "python"  "bots/janitor-bot.py")
-    (list "node"    "bots/FishFactBot.js")
+    (list "python"     "src/dumb-bot.py")
+    (list "python"    "src/graph-bot.py")
+    (list "python"  "src/janitor-bot.py")
+    (list "node"    "src/FishFactBot.js")
     ))
 (define total-bots (vector-length bots)) ; store how many have been set up
 
@@ -18,11 +24,11 @@
   (λ (str)
     (define cd (seconds->date (current-seconds))) 
     (displayln
-     (apply (λ (x y z) (format "[\033[38;5;~am~a\033[0m  @ ~a:~a:~a] ~a" color t-name x y z str))
+     (apply (λ (x y z) (format "[\033[38;5;~am~a\033[0m @ ~a:~a:~a] ~a" color t-name x y z str))
             (map (λ (i) (if (< i 10) (format "0~a" i) (format "~a" i)))
                  (list (date-hour cd) (date-minute cd) (date-second cd)))))))
 
-(define logger (set-logger "gravekeeper" 9))
+(define logger (set-logger "gravekeeper " 9))
 
 ; A one-arg subprocess-kill wrapper
 (define (subproc-kill subp)
@@ -59,5 +65,4 @@
     (loop))
   (loop))
 
-(main)
 ; end

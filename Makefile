@@ -1,5 +1,5 @@
 run:
-	racket launcher.rkt
+	racket run.rkt
 virtualenv:
 	virtualenv dev
 dev:

@@ -1,6 +1,6 @@
 #lang racket
 
-(require rackunit  "src/supervisor.rkt")
+(require "src/supervisor.rkt")
 
 (module+ test (require rackunit))
 

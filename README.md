@@ -3,6 +3,7 @@ Discord Bots
 
 A collection of Robots for Discord.
 
+[![Build Status](https://travis-ci.org/sleibrock/discord-bots.svg?branch=master)](https://travis-ci.org/sleibrock/discord-bots)
 ### Docs
 
 * [AsyncIO Docs](https://docs.python.org/3.4/library/asyncio.html)

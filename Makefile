@@ -8,6 +8,6 @@ setup:
 	pip install -r requirements.txt
 	npm install discordie
 test:
-	raco test -x .
+	raco test -x tests.rkt
 copy_keys:
 	scp -r keys steve@alarmpi:~/discord-bots

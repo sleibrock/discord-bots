@@ -35,22 +35,6 @@ async def howto(msg, mobj):
     return await client.send_message(mobj.channel, pre_text(help_msg))
 
 @register_command
-async def update(msg, mobj):
-    """
-    Execute a 'git pull' to update the code
-    If there was a successful pull, dumb-bot will restart his own thread
-    Example: !update
-    """
-    result = call("git pull")
-    await client.send_message(mobj.channel, pre_text(result))
-    if result.strip() == "Already up-to-date.": # message when git is updated
-        return
-    await client.send_message(mobj.channel, "Upgrading myself senpai")
-    logger("Killing own thread for upgrade")
-    client.close()
-    return quit()
-
-@register_command
 async def rtd(msg, mobj):
     """
     Roll a d<N> di[c]e <X> number of times

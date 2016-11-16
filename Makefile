@@ -7,6 +7,8 @@ dev:
 setup:
 	pip install -r requirements.txt
 	npm install discordie
+clean:
+	rm -rf botdata/
 test:
 	raco test -x tests.rkt
 copy_keys:

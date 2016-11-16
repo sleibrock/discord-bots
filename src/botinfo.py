@@ -51,6 +51,26 @@ def contains_badwords(string):
     """
     return any([x in string for x in bad_words])
 
+def get_last_message(client, chan, uid=None):
+    """
+    Search through the client's messages to find the last message
+    Can also add a User ID to get a specific user's messages
+    """
+    if len(client.messages) == 0:
+        raise Exception("How are we even here?")
+    if len(client.messages) == 1:
+        return None
+    c_uid = lambda u, v: True
+    if uid is not None:
+        c_uid = lambda u, v: u == v
+    res = [msg for msg in client.messages
+            if msg.channel == chan
+            and msg.author.id != client.user.id
+            and c_uid(uid, msg.author.id)]
+    if len(res) <= 1:
+        return None
+    return res[-2]
+
 def setup_all_events(client, bot_name, logger, on_r=None, on_e=None, on_m=None):
     """
     Setup all events using default events
@@ -194,6 +214,20 @@ def read_lines(file_name):
     finally:
         return lines
 
+def write_lines(file_name, lines):
+    """
+    Inverse of :read_lines, just do the opposite
+    True if written, False otherwise
+    """
+    try:
+        with open(file_name, "w") as f:
+            f.write("\n".join(lines))
+    except Exception:
+        return False
+    finally:
+        return True
+    
+
 def create_filegen(bot_name):
     """
     Create a function which allows quick path joins
@@ -225,7 +259,7 @@ def run_the_bot(client, bot_name, loggy):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(client.start(read_key(bot_name)))
     except Exception as e:
-        loggy("Whoop! {}".format(e))
+        loggy("Whoops! {}".format(e))
     except SystemExit:
         loggy("SystemExit, quitting")
     except KeyboardInterrupt:

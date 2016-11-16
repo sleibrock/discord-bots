@@ -17,6 +17,7 @@
     (list "python"     "src/dumb-bot.py")
     (list "python"    "src/graph-bot.py")
     (list "python"  "src/janitor-bot.py")
+    (list "python"   "src/hacker-bot.py")
     (list "node"    "src/FishFactBot.js")
     ))
 (define total-bots (vector-length bots)) ; store how many have been set up

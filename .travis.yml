@@ -8,7 +8,7 @@ env:
   global:
     - RACKET_DIR=~/racket
   matrix:
-    - RACKET_VERSION=RELEASE
+    - RACKET_VERSION=HEAD
 
 before_install:
   - sudo apt-get -qq update

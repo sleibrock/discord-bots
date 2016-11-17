@@ -68,14 +68,12 @@ async def sed(msg, mobj):
     Sed the previous user's message (as opposed to just editing it)
     Example: !sed s/hi/hello/g
     """
-    print(msg)
     if msg == "":
         return
     auth = mobj.author.id
     chan = mobj.channel
-    last_m = get_last_message(client, chan, auth).content.strip()
-    print(last_m)
-    return await client.send_message(chan, pre_text(call("echo '{}' | sed -s {}".format(last_m, msg))))
+    last_m = get_last_message(client, chan, auth).content.strip().replace("\"", "'")
+    return await client.send_message(chan, pre_text(call("echo \"{}\" | sed -s {}".format(last_m, msg))))
 
 # The Git section
 @register_command
@@ -121,8 +119,9 @@ async def cowtag(msg, mobj):
     lines.append(last_m)
     if len(lines) > max_data:
         lines.pop(0)
-    write_lines(cowlist, lines)
-    return await client.send_message(chan, pre_text(call("echo \"Bagged and tagged\" | cowsay")))
+    if not write_lines(cowlist, lines):
+        return await client.send_message(chan, "Error writing to file")
+    return await client.send_message(chan, "Bagged and tagged")
 
 @register_command
 async def cowsay(msg, mobj):
@@ -136,6 +135,8 @@ async def cowsay(msg, mobj):
     if not cowlines:
         return await client.send_message(mobj.channel, "No cow messages here")
     rand = choice(cowlines)
+    if rand.strip() == "":
+        return await client.send_message(mobj.channel, "No cow messages here")
     return await client.send_message(mobj.channel, pre_text(call("echo \"{}\" | cowsay".format(rand))))
 
 setup_all_events(client, bot_name, logger)

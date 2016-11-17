@@ -107,6 +107,7 @@ async def yt(msg, mobj):
 async def osfrog(msg, mobj):
     """
     Freshen up your day with some Dota 2 OSfrog
+    Example: !osfrog
     """
     data = [":frog: BALANCE IN ALL THINGS :frog:",
             ":thumbsup: Thanks Purge :thumbsup:",

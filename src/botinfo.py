@@ -211,8 +211,7 @@ def read_lines(file_name):
             lines = f.readlines()
     except Exception:
         pass
-    finally:
-        return lines
+    return lines
 
 def write_lines(file_name, lines):
     """
@@ -221,11 +220,11 @@ def write_lines(file_name, lines):
     """
     try:
         with open(file_name, "w") as f:
-            f.write("\n".join(lines))
+            f.writelines("\n".join([line.strip().replace("\n","") for line in lines
+                               if line.strip().replace("\n","") != ""]))
     except Exception:
         return False
-    finally:
-        return True
+    return True
     
 
 def create_filegen(bot_name):

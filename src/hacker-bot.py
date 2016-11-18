@@ -6,7 +6,6 @@ Hacker bot
 
 Designed as a way to interact with the host machine
 Also comes with a Lis.py interpreter (thanks Peter Norvig)
-Although it's more of a Racket-style interpreter with some new stuffs
 Requires: cowsay installed on system
 """
 
@@ -19,6 +18,10 @@ from random import choice, random, randint
 import math
 import operator as op
 from functools import reduce
+
+# setting maximum recursion limits for Lisp evaluation
+from sys import setrecursionlimit
+setrecursionlimit(100)
 
 bot_name = "hacker-bot"
 client   = discord.Client()
@@ -35,10 +38,7 @@ Number = (int, float) # A Lisp Number is implemented as a Python int or float
 def tokenize(chars):
     """
     Convert a string of characters into a list of tokens
-    Support for Racket [] and {} closings
     """
-    chars = chars.replace('[', ' ( ').replace(']', ' ) ')
-    chars = chars.replace('{', ' { ').replace('}', ' ) ')
     return chars.replace('(', ' ( ').replace(')', ' ) ').split()
 
 def parse(program):
@@ -46,9 +46,12 @@ def parse(program):
     return read_from_tokens(tokenize(program))
 
 def read_from_tokens(tokens):
-    "Read an expression from a sequence of tokens."
+    """
+    Read an expression from a sequence of tokens
+    TODO: add support for dicts, strings and lists
+    """
     if len(tokens) == 0:
-        raise SyntaxError('unexpected EOF while reading')
+        raise SyntaxError('Unexpected EOF while reading')
     token = tokens.pop(0)
     if '(' == token:
         L = []
@@ -57,7 +60,7 @@ def read_from_tokens(tokens):
         tokens.pop(0) # pop off ')'
         return L
     elif ')' == token:
-        raise SyntaxError('unexpected )')
+        raise SyntaxError('Unexpected )')
     else:
         return atom(token)
 
@@ -65,6 +68,10 @@ def atom(token):
     """
     Numbers become numbers; every other token is a symbol
     """
+    if token in ("True", "False"):
+        return bool(token)
+    if token == "#t": return True
+    if token == "#f": return False
     try:
         return int(token)
     except ValueError:
@@ -93,13 +100,31 @@ def compose(*list_of_funcs):
     """
     Compose a list of functions into a singular function
     """
+    if not isinstance(list_of_funcs, (tuple, list)):
+        raise SyntaxError("compose: No list given")
     if not all(filter(callable, list_of_funcs)):
-        raise SyntaxError("Non-composable type given")
+        raise SyntaxError("compose: Non-composable type given")
     def whatever(in_var):
         for func in list_of_funcs:
             in_var = func(in_var)
         return in_var
     return whatever
+
+def compareduce(f, *lst):
+    """
+    A reduce modified to work for `f :: a -> b -> Bool` functions
+    If `f` ever evaluates to False, return False, else return True
+    This is mandatory because functools.reduce doesn't store previous
+    values for each pair in the computation chain
+    """
+    if len(lst) <= 1:
+        raise SyntaxError("{}: List too small for evaluation".format(f.__name__))
+    first_value = lst[0]
+    for next_value in lst[1:]:
+        if not f(first_value, next_value):
+            return False
+        first_value = next_value
+    return True
 
 def standard_env():
     """
@@ -113,54 +138,94 @@ def standard_env():
         'eq?'        : op.is_, 
         'equal?'     : op.eq, 
         'not'        : op.not_,
+        'negate'     : op.neg,
+        'int'        : int,
+        'float'      : float,
+        'bool'       : bool,
+        'ord'        : ord,
+        'chr'        : chr,
+        'bin'        : bin,
+        'oct'        : oct,
+        'hex'        : hex,
+        'hash'       : hash,
         'abs'        : abs,
         'length'     : len, 
         'sum'        : sum,
+        'any'        : any,
+        'all'        : all,
         'max'        : max,
         'min'        : min,
         'reduce'     : reduce,
+        'reverse'    : reversed,
         'random'     : random,
         'randint'    : randint,
         'choice'     : choice,
         'round'      : round,
         'compose'    : compose,
         'id'         : lambda x   : x,
-        'eq?'        : lambda *x  : reduce(op.is_, x),
-        'equal?'     : lambda *x  : reduce(op.eq, x),
+        'eq?'        : lambda *x  : compareduce(op.is_, x),
+        'equal?'     : lambda *x  : compareduce(op.eq, x),
         '+'          : lambda *x  : reduce(op.add, x),
+        'append'     : lambda *x  : reduce(op.add, x),
         '-'          : lambda *x  : reduce(op.sub, x),
         '*'          : lambda *x  : reduce(op.mul, x),
         '/'          : lambda *x  : reduce(op.truediv, x),
-        '>'          : lambda *x  : reduce(op.gt, x),
-        '<'          : lambda *x  : reduce(op.lt, x),
-        '>='         : lambda *x  : reduce(op.ge, x),
-        '<='         : lambda *x  : reduce(op.le, x),
-        '='          : lambda *x  : reduce(op.eq, x),
+        '%'          : lambda *x  : reduce(op.mod, x),
+        'mod'        : lambda *x  : reduce(op.mod, x),
+        'modulo'     : lambda *x  : reduce(op.mod, x),
+        '>'          : lambda *x  : all(map(f, zip(x, x[1:]))),
+        '>'          : lambda *x  : compareduce(op.gt, *x),
+        '<'          : lambda *x  : compareduce(op.lt, *x),
+        '>='         : lambda *x  : compareduce(op.ge, *x),
+        '<='         : lambda *x  : compareduce(op.le, *x),
+        '='          : lambda *x  : compareduce(op.eq, *x),
+        '>>'         : lambda x, y: op.rshift(x, y),
+        '<<'         : lambda x, y: op.lshift(x, y),
         'or'         : lambda *x  : reduce(lambda x, y: x or y, x),
         'and'        : lambda *x  : reduce(lambda x, y: x and y, x),
         'add1'       : lambda x   : x + 1,
         'sub1'       : lambda x   : x - 1,
         'range'      : lambda x   : list(range(x)),
-        'span'       : lambda x   : list(range(x, y)),
+        'span'       : lambda x, y: list(range(x, y)),
         'enum'       : lambda x   : list(enumerate(x)),
         'zip'        : lambda x   : list(zip(x)),
-        'apply'      : lambda f,x : f(*x),
+        '^'          : lambda x, y: pow(x, y),
+        'pow'        : lambda x, y: pow(x, y),
+        'apply'      : lambda f, x: f(*x),
         'begin'      : lambda *x  : x[-1],
+        'cons'       : lambda x, y: [x] + y,
         'car'        : lambda x   : x[0],
         'cdr'        : lambda x   : x[1:], 
         'head'       : lambda x   : x[0],
         'tail'       : lambda x   : x[1:],
-        'cons'       : lambda x, y: [x] + y,
+        'take'       : lambda x, y: x[:y],
+        'drop'       : lambda x, y: x[y:],
+        'takewhile'  : lambda x, y: None,
+        'dropwhile'  : lambda x, y: None,
         'list'       : lambda *x  : list(x), 
+        'tuple'      : lambda *x  : tuple(x),
+        'dict'       : lambda *x  : dict(x),
+        'set'        : lambda *x  : set(x),
+        'frozenset'  : lambda *x  : frozenset(x),
         'map'        : lambda f, x: list(map(f, x)),
         'filter'     : lambda f, x: list(filter(f, x)),
+        'ormap'      : lambda f, x: any(map(f, x)),
+        'andmap'     : lambda f, x: all(map(f, x)),
         'zero?'      : lambda x   : x == 0,
         'empty?'     : lambda x   : len(x) == 0,
         'pair?'      : lambda x   : len(x) == 2,
         'procedure?' : lambda x   : callable(x),
         'number?'    : lambda x   : isinstance(x, Number),   
         'symbol?'    : lambda x   : isinstance(x, Symbol),
-        'list?'      : lambda x   : isinstance(x,list), 
+        'string?'    : lambda x   : isinstance(x, str),
+        'odd?'       : lambda x   : bool(x&1),
+        'even?'      : lambda x   : not bool(x&1),
+        'list?'      : lambda x   : isinstance(x, list), 
+        'tuple?'     : lambda x   : isinstance(x, tuple),
+        'set?'       : lambda x   : isinstance(x, set),
+        'frozenset?' : lambda x   : isinstance(x, frozenset),
+        'dict?'      : lambda x   : isinstance(x, dict),
+        'contains?'  : lambda x, y: op.contains(x, y),
     })
     return env
 
@@ -195,25 +260,19 @@ def lispeval(x, env=global_env):
         args = [lispeval(arg, env) for arg in x[1:]]
         return proc(*args)
 
-def schemestr(exp):
-    """
-    Convert a Python object back into a Scheme-readable string
-    """
-    if isinstance(exp, List):
-        return '(' + ' '.join(map(schemestr, exp)) + ')' 
-    return str(exp)
-
 @register_command
 async def e(msg, mobj):
     """
-    Interpret a Lisp expression using Python
-    Example: !lisp (+ 1 2)
+    Interpret a Lisp expression using a Lisp-to-Python translater
+    Ex1: !e (define x (+ 20 40 pi)) 
+    Ex2: !e (map (lambda (x) (+ x 5)) (range 10))
     """
     try:
         result = lispeval(parse(msg))
         if len(str(result)) + len(msg) > 1900:
             return await client.send_message(mobj.channel, "Output too large")
-        return await client.send_message(mobj.channel, pre_text("{}\n => {}".format(msg, result)))
+        return await client.send_message(mobj.channel,
+                                         pre_text("{}\n => {}".format(msg, result), "lisp"))
     except Exception as ex:
         return await client.send_message(mobj.channel, pre_text("{}: {}".format(type(ex).__name__, ex)))
     return await client.send_mesage(mobj.channel, "Failed to compute expression")

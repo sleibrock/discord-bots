@@ -148,6 +148,7 @@ def register_command(func=None, binds={}):
 def setup_on_message(client, logger):
     """
     Create a basic on_message function to use
+    If 'help' is fed to the function, print out a help message in pre-tags
     """
     async def on_message(msg):
         if contains_badwords(msg.content.lower()):
@@ -159,7 +160,9 @@ def setup_on_message(client, logger):
         binds = register_command()
         if key in binds:
             if rest.lower().startswith("help"):
-                return await client.send_message(msg.channel, pre_text(binds[key].__doc__))
+                return await client.send_message(msg.channel,
+                                                pre_text("Help for '{}':{}".format(
+                                                     key, binds[key].__doc__)))
             return await binds[key](*args)
         return
     return on_message
@@ -176,11 +179,14 @@ def read_key(bot_name):
         raise IOError("Can't read key")
     return False
 
-def pre_text(string):
+def pre_text(string, lang=None):
     """
     Encapsulate a string inside a Markdown <pre> container
     """
-    return "```{}```".format(string.rstrip().strip("\n").replace("\t", ""))
+    s = "```{}```"
+    if lang is not None:
+        s = s.format(lang+"\n{}")
+    return s.format(string.rstrip().strip("\n").replace("\t", ""))
 
 def url_replace(string, cmap=char_map):
     """

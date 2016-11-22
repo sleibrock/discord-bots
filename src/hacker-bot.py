@@ -6,7 +6,7 @@ Hacker bot
 
 Designed as a way to interact with the host machine
 Also comes with a Lis.py interpreter (thanks Peter Norvig)
-Requires: cowsay installed on system
+Requires: cowsay, screenfetch, cowfortune
 """
 
 from botinfo import *
@@ -29,7 +29,6 @@ logger   = create_logger(bot_name)
 bot_data = create_filegen(bot_name)
 max_slen = 300
 max_data = 100
-max_stak = 10
 
 ## Lisp Interpreter section 
 Symbol = str          # A Lisp Symbol is implemented as a Python str
@@ -280,13 +279,6 @@ async def e(msg, mobj):
 ## end lisp section
             
 @register_command
-async def test(msg, mobj):
-    print(client.messages)
-    print(len(client.messages))
-    print("last message was: {}".format(get_last_message(mobj.channel).content))
-    return await client.send_message(mobj.channel, "test")
-
-@register_command
 async def uptime(msg, mobj):
     """
     Return the uptime of the host system
@@ -320,6 +312,14 @@ async def cal(msg, mobj):
     Return the current month calendar
     """
     return await client.send_message(mobj.channel, pre_text(call("cal")))
+
+@register_command
+async def screenfetch(msg, mobj):
+    """
+    Return a screenfetch output
+    Example: !screenfetch
+    """
+    return await client.send_message(mobj.channel, pre_text(call("screenfetch -N")))
 
 @register_command
 async def sed(msg, mobj):
@@ -397,6 +397,14 @@ async def cowsay(msg, mobj):
     if rand.strip() == "":
         return await client.send_message(mobj.channel, "No cow messages here")
     return await client.send_message(mobj.channel, pre_text(call("echo \"{}\" | cowsay".format(rand))))
+
+@register_command
+async def fortune(msg, mobj):
+    """
+    Return a `fortune | cowsay` call
+    Example: !fortune
+    """
+    return await client.send_message(mobj.channel, pre_text(call("fortune | cowsay")))
 
 setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":

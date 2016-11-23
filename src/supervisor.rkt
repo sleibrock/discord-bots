@@ -40,21 +40,14 @@
        (syscall (vector-ref bots bot-id)) 
        (thread-send parent-thread bot-id)))))
 
-;; Create a thread reviving function corresponding to a vector of threads
-;; reviver :: (Vectorof Threads) -> (-> Nonnegative-Integer Thread) -> Void
-(define (reviver threads bot-func)
-  (λ (bot-id)
-    (vector-set! threads bot-id (bot-func bot-id)))) 
-
 ;; Gravekeeper main function to keep the subprocesses running
 ;; main :: Void
 (define (main)
   (define start-bot (bot-factory (current-thread)))
-  (define threads (build-vector total-bots start-bot))
-  (define revive (reviver threads start-bot))
+  (for-each start-bot (build-list total-bots (λ (x) x)))
   (sleep 30) ; wait for bots to start before looping
   (define (loop)
-    (revive (thread-receive))
+    (start-bot (thread-receive))
     (loop))
   (loop))
 

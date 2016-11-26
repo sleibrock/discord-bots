@@ -42,7 +42,10 @@ client.Dispatcher.on(Events.GATEWAY_READY, e => {
 });
 
 client.Dispatcher.on(Events.MESSAGE_CREATE, e => {
-	if(e.message.content.toLowerCase() == '!fishfact')
+	
+	var incoming = e.message.content.toLowerCase();
+
+	if(incoming == '!fishfact')
 	{
 		var random = Math.floor(Math.random()*factArray.length);
 		var message = 'Fish Fact #' + (random +1) + "  - " +  factArray[random];

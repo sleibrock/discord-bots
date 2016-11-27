@@ -75,12 +75,12 @@ client.Dispatcher.on(Events.MESSAGE_CREATE, e => {
 	if(incoming.startsWith('!') && incoming.endsWith('fact') && incoming !== '!fishfact')
 	{
 		//generate a fish fact based on the type of fish requested by the user
-		var fish = incoming.substring(1,incoming.length-4);
+		var fish = incoming.substring(1,incoming.length-4).toLowerCase();
 		var fishArray = [];
 		//create a new array to hold the info about the fish
 		for(var i = 0; i < factArray.length; i++)
 		{
-			if(factArray[i].includes(fish))
+			if(factArray[i].toLowerCase().includes(fish))
 			{
 				fishArray.push(factArray[i]);
 			}

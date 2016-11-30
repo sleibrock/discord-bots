@@ -22,7 +22,7 @@
 
 (module+ test 
    (test-case "Testing successful compiles on all bots"
-     (let ([subs (map (λ (bot) (syscall (debug-args bot))) (vector->list bots))])
+     (let ([subs (map (λ (bot) (syscall (debug-args bot))) bots)])
        (displayln "Checking if all bots were properly tested...")
        (check = (length subs) total-bots)
        (displayln "Checking if all bots compiled successfully...")

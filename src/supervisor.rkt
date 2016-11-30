@@ -11,13 +11,12 @@
 
 ;; bots :: (Vectorof (Listof String))
 (define bots
-  (vector
-    '("python"    "src/dumb-bot.py")
-    '("python"   "src/graph-bot.py")
-    '("python"  "src/hacker-bot.py")
-    '("python" "src/janitor-bot.py")
-    '("node"   "src/FishFactBot.js")))
-(define total-bots (vector-length bots))
+  (list '("python"    "src/dumb-bot.py")
+        '("python"   "src/graph-bot.py")
+        '("python"  "src/hacker-bot.py")
+        '("python" "src/janitor-bot.py")
+        '("node"   "src/FishFactBot.js")))
+(define total-bots (length bots))
 
 ;; Creates a new function which prints out a message with a name attached
 ;; set-logger :: String -> String -> String -> Void
@@ -33,19 +32,19 @@
 ;; Create a function which will yield new threads that send data to a parent thread
 ;; bot-factory :: Thread -> Nonnegative-Integer -> Thread
 (define (bot-factory parent-thread)
-  (λ (bot-id)
+  (λ (bot-item)
     (thread
      (λ ()
-       (logger (format "Starting Bot ~a" bot-id))
-       (syscall (vector-ref bots bot-id)) 
-       (thread-send parent-thread bot-id)))))
+       (logger (format "Starting Bot ~a" (car (cdr bot-item))))
+       (syscall bot-item) 
+       (thread-send parent-thread bot-item)))))
 
 ;; Gravekeeper main function to keep the subprocesses running
 ;; main :: Void
 (define (main)
+  (logger "Starting bots")
   (define start-bot (bot-factory (current-thread)))
-  (for-each start-bot (build-list total-bots (λ (x) x)))
-  (sleep 30) ; wait for bots to start before looping
+  (for-each start-bot bots)
   (define (loop)
     (start-bot (thread-receive))
     (loop))

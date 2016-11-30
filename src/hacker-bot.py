@@ -161,70 +161,71 @@ def standard_env():
         'choice'     : choice,
         'round'      : round,
         'compose'    : compose,
-        'id'         : lambda x   : x,
-        'eq?'        : lambda *x  : compareduce(op.is_, x),
-        'equal?'     : lambda *x  : compareduce(op.eq, x),
-        '+'          : lambda *x  : reduce(op.add, x),
-        'append'     : lambda *x  : reduce(op.add, x),
-        '-'          : lambda *x  : reduce(op.sub, x),
-        '*'          : lambda *x  : reduce(op.mul, x),
-        '/'          : lambda *x  : reduce(op.truediv, x),
-        '%'          : lambda *x  : reduce(op.mod, x),
-        'mod'        : lambda *x  : reduce(op.mod, x),
-        'modulo'     : lambda *x  : reduce(op.mod, x),
-        '>'          : lambda *x  : all(map(f, zip(x, x[1:]))),
-        '>'          : lambda *x  : compareduce(op.gt, *x),
-        '<'          : lambda *x  : compareduce(op.lt, *x),
-        '>='         : lambda *x  : compareduce(op.ge, *x),
-        '<='         : lambda *x  : compareduce(op.le, *x),
-        '='          : lambda *x  : compareduce(op.eq, *x),
-        '>>'         : lambda x, y: op.rshift(x, y),
-        '<<'         : lambda x, y: op.lshift(x, y),
-        'or'         : lambda *x  : reduce(lambda x, y: x or y, x),
-        'and'        : lambda *x  : reduce(lambda x, y: x and y, x),
-        'add1'       : lambda x   : x + 1,
-        'sub1'       : lambda x   : x - 1,
-        'range'      : lambda x   : list(range(x)),
-        'span'       : lambda x, y: list(range(x, y)),
-        'enum'       : lambda x   : list(enumerate(x)),
-        'zip'        : lambda x   : list(zip(x)),
-        '^'          : lambda x, y: pow(x, y),
-        'pow'        : lambda x, y: pow(x, y),
-        'apply'      : lambda f, x: f(*x),
-        'begin'      : lambda *x  : x[-1],
-        'cons'       : lambda x, y: [x] + y,
-        'car'        : lambda x   : x[0],
-        'cdr'        : lambda x   : x[1:], 
-        'head'       : lambda x   : x[0],
-        'tail'       : lambda x   : x[1:],
-        'take'       : lambda x, y: x[:y],
-        'drop'       : lambda x, y: x[y:],
-        'takewhile'  : lambda x, y: None,
-        'dropwhile'  : lambda x, y: None,
-        'list'       : lambda *x  : list(x), 
-        'tuple'      : lambda *x  : tuple(x),
-        'dict'       : lambda *x  : dict(x),
-        'set'        : lambda *x  : set(x),
-        'frozenset'  : lambda *x  : frozenset(x),
-        'map'        : lambda f, x: list(map(f, x)),
-        'filter'     : lambda f, x: list(filter(f, x)),
-        'ormap'      : lambda f, x: any(map(f, x)),
-        'andmap'     : lambda f, x: all(map(f, x)),
-        'zero?'      : lambda x   : x == 0,
-        'empty?'     : lambda x   : len(x) == 0,
-        'pair?'      : lambda x   : len(x) == 2,
-        'procedure?' : lambda x   : callable(x),
-        'number?'    : lambda x   : isinstance(x, Number),   
-        'symbol?'    : lambda x   : isinstance(x, Symbol),
-        'string?'    : lambda x   : isinstance(x, str),
-        'odd?'       : lambda x   : bool(x&1),
-        'even?'      : lambda x   : not bool(x&1),
-        'list?'      : lambda x   : isinstance(x, list), 
-        'tuple?'     : lambda x   : isinstance(x, tuple),
-        'set?'       : lambda x   : isinstance(x, set),
-        'frozenset?' : lambda x   : isinstance(x, frozenset),
-        'dict?'      : lambda x   : isinstance(x, dict),
-        'contains?'  : lambda x, y: op.contains(x, y),
+        'id'         : lambda x      : x,
+        'eq?'        : lambda *x     : compareduce(op.is_, x),
+        'equal?'     : lambda *x     : compareduce(op.eq, x),
+        '+'          : lambda *x     : reduce(op.add, x),
+        'append'     : lambda *x     : reduce(op.add, x),
+        '-'          : lambda *x     : reduce(op.sub, x),
+        '*'          : lambda *x     : reduce(op.mul, x),
+        '/'          : lambda *x     : reduce(op.truediv, x),
+        '%'          : lambda *x     : reduce(op.mod, x),
+        'mod'        : lambda *x     : reduce(op.mod, x),
+        'modulo'     : lambda *x     : reduce(op.mod, x),
+        '>'          : lambda *x     : all(map(f, zip(x, x[1:]))),
+        '>'          : lambda *x     : compareduce(op.gt, *x),
+        '<'          : lambda *x     : compareduce(op.lt, *x),
+        '>='         : lambda *x     : compareduce(op.ge, *x),
+        '<='         : lambda *x     : compareduce(op.le, *x),
+        '='          : lambda *x     : compareduce(op.eq, *x),
+        '>>'         : lambda x, y   : op.rshift(x, y),
+        '<<'         : lambda x, y   : op.lshift(x, y),
+        'or'         : lambda *x     : reduce(lambda x, y: x or y, x),
+        'and'        : lambda *x     : reduce(lambda x, y: x and y, x),
+        'add1'       : lambda x      : x + 1,
+        'sub1'       : lambda x      : x - 1,
+        'range'      : lambda x      : list(range(x)),
+        'span'       : lambda x, y   : list(range(x, y)),
+        'enum'       : lambda x      : list(enumerate(x)),
+        'zip'        : lambda x      : list(zip(x)),
+        '^'          : lambda x, y   : pow(x, y),
+        'pow'        : lambda x, y   : pow(x, y),
+        'apply'      : lambda f, x   : f(*x),
+        'begin'      : lambda *x     : x[-1],
+        'cons'       : lambda x, y   : [x] + y,
+        'car'        : lambda x      : x[0],
+        'cdr'        : lambda x      : x[1:], 
+        'head'       : lambda x      : x[0],
+        'tail'       : lambda x      : x[1:],
+        'take'       : lambda x, y   : x[:y],
+        'drop'       : lambda x, y   : x[y:],
+        'takewhile'  : lambda x, y   : None,
+        'dropwhile'  : lambda x, y   : None,
+        'list'       : lambda *x     : list(x), 
+        'tuple'      : lambda *x     : tuple(x),
+        'dict'       : lambda *x     : dict(x),
+        'set'        : lambda *x     : set(x),
+        'frozenset'  : lambda *x     : frozenset(x),
+        'map'        : lambda f, x   : list(map(f, x)),
+        'filter'     : lambda f, x   : list(filter(f, x)),
+        'ormap'      : lambda f, x   : any(map(f, x)),
+        'andmap'     : lambda f, x   : all(map(f, x)),
+        'zero?'      : lambda x      : x == 0,
+        'empty?'     : lambda x      : len(x) == 0,
+        'pair?'      : lambda x      : len(x) == 2,
+        'procedure?' : lambda x      : callable(x),
+        'number?'    : lambda x      : isinstance(x, Number),   
+        'symbol?'    : lambda x      : isinstance(x, Symbol),
+        'string?'    : lambda x      : isinstance(x, str),
+        'odd?'       : lambda x      : bool(x&1),
+        'even?'      : lambda x      : not bool(x&1),
+        'list?'      : lambda x      : isinstance(x, list), 
+        'tuple?'     : lambda x      : isinstance(x, tuple),
+        'set?'       : lambda x      : isinstance(x, set),
+        'frozenset?' : lambda x      : isinstance(x, frozenset),
+        'dict?'      : lambda x      : isinstance(x, dict),
+        'contains?'  : lambda x, y   : op.contains(x, y),
+        'foldl'      : lambda o, i, x: reduce(o, x, i),
     })
     return env
 
@@ -319,7 +320,7 @@ async def screenfetch(msg, mobj):
     Return a screenfetch output
     Example: !screenfetch
     """
-    return await client.send_message(mobj.channel, pre_text(call("screenfetch -N")))
+    return await client.send_message(mobj.channel, pre_text(call("screenfetch -N -n")))
 
 @register_command
 async def sed(msg, mobj):
@@ -405,6 +406,28 @@ async def fortune(msg, mobj):
     Example: !fortune
     """
     return await client.send_message(mobj.channel, pre_text(call("fortune | cowsay")))
+
+@register_command
+async def hoogle(msg, mobj):
+    """
+    Send a Haskell type signature to Hoogle and return the first result
+    If no results, error string
+    Ex1: !hoogle (a -> b) -> M a -> M b
+    Ex2: !hoogle >>=
+    """
+    if contains_badwords(msg):
+        return
+    if msg == "":
+        return await client.send_message(mobj.channel, "Nothing sent")
+    base_url = "https://www.haskell.org/hoogle/?hoogle={}"
+    search = BS(re_get(base_url.format(url_replace(msg))).text, "html.parser")
+    answers = search.find_all("div", class_="ans")
+    if not answers:
+        return await client.send_message(mobj.channel, "Nothing was found, bud")
+    res = answers[0]
+    text = res.text
+    url = res.find("a", class_="a")["href"]
+    return await client.send_message(mobj.channel, "{}\n{}".format(text, url))
 
 setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":

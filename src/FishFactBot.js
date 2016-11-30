@@ -61,7 +61,7 @@ client.Dispatcher.on(Events.GATEWAY_READY, e => {
 });
 
 client.Dispatcher.on(Events.MESSAGE_CREATE, e => {
-	//generate a fish fact based on a user message using ! as a delimiter to indicate that the bot should respond
+
 	var incoming = e.message.content.toLowerCase();
 
 	if(incoming == '!fishfact')

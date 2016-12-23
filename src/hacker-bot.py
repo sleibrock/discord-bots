@@ -37,8 +37,11 @@ Number = (int, float) # A Lisp Number is implemented as a Python int or float
 def tokenize(chars):
     """
     Convert a string of characters into a list of tokens
+    TODO: work on joining strings together at this level
+    If mismatched quotes detected, raise SyntaxError
     """
-    return chars.replace('(', ' ( ').replace(')', ' ) ').split()
+    old_tokens = chars.replace('(', ' ( ').replace(')', ' ) ').split()
+    return old_tokens
 
 def parse(program):
     "Read a Scheme expression from a string."
@@ -66,11 +69,17 @@ def read_from_tokens(tokens):
 def atom(token):
     """
     Numbers become numbers; every other token is a symbol
+    Order of checks: Bool, String, Int, Float, Symbol
+    Strings end with ' or "
     """
     if token in ("True", "False"):
         return bool(token)
     if token == "#t": return True
     if token == "#f": return False
+    if token.startswith("\"") and token.endswith("\""):
+        return str(token)
+    if token.startswith("'") and token.endswith("'"):
+        return str(token)
     try:
         return int(token)
     except ValueError:
@@ -407,6 +416,7 @@ async def fortune(msg, mobj):
     """
     return await client.send_message(mobj.channel, pre_text(call("fortune | cowsay")))
 
+# search options
 @register_command
 async def hoogle(msg, mobj):
     """

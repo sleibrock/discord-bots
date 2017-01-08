@@ -10,6 +10,6 @@ setup:
 clean:
 	rm -rf botdata/
 test:
-	raco test -x tests.rkt
+	sh tests.sh
 copy_keys:
 	scp -r keys steve@alarmpi:~/discord-bots

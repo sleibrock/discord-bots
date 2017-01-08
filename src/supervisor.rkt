@@ -38,9 +38,7 @@
 ;; a quick wrapper function for subprocess 
 (define (subproc p a)
   (parameterize ([current-subprocess-custodian-mode 'kill])
-    (apply
-     subprocess
-     (append (list (current-output-port) #f 'stdout (find-executable-path p)) a))))
+    (subprocess (current-output-port) #f 'stdout (find-executable-path p) a)))
 
 ;; A one-arg subprocess-kill wrapper
 (define (subproc-kill subp)
@@ -50,7 +48,7 @@
 (define (start-bot bot-id)
   (define-values (interp code) (apply values (vector-ref bots bot-id)))
   (define-values (a b c d)
-    (subproc interp (list code)))
+    (subproc interp code))
   (logger (format "Initialized Bot ~a on PID ~a" bot-id (subprocess-pid a)))
   a)
 

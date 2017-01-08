@@ -19,7 +19,7 @@
              10
              (lambda (x)
                  (define-values (a b c d)
-                   (subproc "sleep" '("300000")))
+                   (syscall '("sleep" "300000")))
                      a))])
        (check = (length subs) 10 "Test size not equal")
        (for-each subproc-kill subs)
@@ -35,7 +35,7 @@
              total-bots
              (lambda (x)
                  (define-values (interp code) (apply values (vector-ref bots x)))
-                 (define-values (a b c d) (subproc interp (debug-args interp code)))
+                 (define-values (a b c d) (syscall interp (debug-args interp code)))
                  a))])
        (check = (length subs) total-bots)
        (sleep 5)

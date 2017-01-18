@@ -103,25 +103,6 @@ async def yt(msg, mobj):
         logger("Fail: {}".format(ex))
     return await client.send_message(mobj.channel, "Failed to request the search")
 
-@register_command
-async def osfrog(msg, mobj):
-    """
-    Freshen up your day with some Dota 2 OSfrog
-    Example: !osfrog
-    """
-    data = [":frog: BALANCE IN ALL THINGS :frog:",
-            ":thumbsup: Thanks Purge :thumbsup:",
-            ":frog: :gun:",
-            ":frog: le balanced :fish: man :frog:",
-            ":frog: +1 :shield: armor :frog:",
-            ":frog: :dragon: Illusory orb speed increased by 1 :frog:",
-            ":frog: Vacuum cooldown rescaled from 28.0 seconds to 28 seconds :frog:",
-            ":frog: le balanced :cloud_tornado: man :frog:",
-            ":frog: SEEMS GOOD TO ME :frog:",
-            ":frog: le balanced 1050 :dragon: lance attack range :frog:",
-            ":frog: ¯\_(ツ)_/¯ :frog:",]
-    return await client.send_message(mobj.channel, choice(data))
-
 # Last step - register events then run
 setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":

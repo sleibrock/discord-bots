@@ -23,9 +23,8 @@ async def on_error(err):
 
 if __name__ == "__main__":
     try:
-        argv.pop(0)
-        key = argv.pop(0)
-        client.run(read_key(key))
+        k = argv[1]
+        client.run(k)
     except Exception as e:
         print("{} fail: {}".format(key, e))
     except SystemExit:

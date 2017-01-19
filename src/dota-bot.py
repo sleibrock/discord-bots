@@ -141,12 +141,20 @@ BOOTS = [
     {"name": "Arcane Boots", "price": 1300},
 ]
 
+# Optional tie-ins for certain types of characters
+MELEE_ONLY = [
+    {"name": "Echo Saber", "price": 2650},
+]
+
+RANGED_ONLY = [
+    {"name": "Hurricane Pike", "price": 4375},
+]
+
 # Rapier won't be included as it can lead to many game losses
 # Each item has an associated cost so you can measure how much
 # gold is required to reach your target (and possibly re-roll
 # if the GPM is just an impossibility for your given character)
 ITEMS = [
-    {"name": "Echo Saber", "price": 2650},
     {"name": "Daedelus", "price": 5520},
     {"name": "Abyssal Blade", "price": 6400},
     {"name": "Monkey King Bar", "price": 5400},
@@ -162,7 +170,7 @@ ITEMS = [
     {"name": "Sange and Yasha", "price": 4100},
     {"name": "Mjollnir", "price": 5700},
     {"name": "Butterfly", "price": 5525},
-    {"name": "Blink Dagger", "price": 0},
+    {"name": "Blink Dagger", "price": 2250},
     {"name": "Moon Shard", "price": 4000},
     {"name": "Desolator", "price": 3500},
     {"name": "Satanic", "price": 5800},
@@ -170,7 +178,6 @@ ITEMS = [
     {"name": "Blaemail", "price": 2200},
     {"name": "Crimson Guard", "price": 3550},
     {"name": "Black King Bar", "price": 3975},
-    {"name": "Hurricane Pike", "price": 4375},
     {"name": "Shiva's Guard", "price": 4700},
     {"name": "Lotus Orb", "price": 4000},
     {"name": "Linken's Sphere", "price": 4800},
@@ -195,6 +202,11 @@ bot_name = "dota-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
 
+# API endpoints go here
+TWITCH_API = ""
+OPENDOTA_API = ""
+YOUTUBE_URL = ""
+
 def get_latest_video(youtube_id):
     """
     Retrieve the latest video from a YouTube user via scraping
@@ -206,7 +218,7 @@ async def osfrog(msg, mobj):
     """
     Patch 7.02: help string was removed from Captain's Mode 
     """
-    return
+    return await client.send_message(mobj.channel, ":frog:")
 
 @register_command
 async def challenge(msg, mobj):
@@ -245,6 +257,7 @@ async def streams(msg, mobj):
     """
     return
 
+# All youtube scrapes below
 @register_command
 async def bulldog(msg, mobj):
     """

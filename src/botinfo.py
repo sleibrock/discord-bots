@@ -174,7 +174,7 @@ def read_key(bot_name):
     """
     try:
         with open(join(KEY_FOLDER, "{}.key".format(bot_name)), 'r') as f:
-            return f.read()
+            return f.read().strip("\n").strip("\r").replace("\n", "")
     except Exception:
         raise IOError("Can't read key")
     return False

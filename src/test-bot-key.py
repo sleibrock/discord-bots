@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 
 from botinfo import *
+from sys import argv
 
 client = discord.Client()
 

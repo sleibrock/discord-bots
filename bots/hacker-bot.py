@@ -272,7 +272,7 @@ def lispeval(x, env=global_env):
 @register_command
 async def e(msg, mobj):
     """
-    Interpret a Lisp expression using a Lisp-to-Python translater
+    Interpret a Lisp expression using a Lisp-to-Python translator
     Ex1: !e (define x (+ 20 40 pi)) 
     Ex2: !e (map (lambda (x) (+ x 5)) (range 10))
     """
@@ -287,6 +287,26 @@ async def e(msg, mobj):
     return await client.send_mesage(mobj.channel, "Failed to compute expression")
 
 ## end lisp section
+
+@register_command
+async def info(msg, mobj):
+    """
+    Return current channel/guild information
+    """
+    chan = mobj.channel
+    serv = mobj.guild
+    chan_name, serv_name = None, None
+    chan_id, serv_id = 0, 0
+    if hasattr(chan, 'name'): chan_name = chan.name
+    if hasattr(serv, 'name'): serv_name = serv.name
+    if hasattr(chan, 'id'): chan_id = chan.id
+    if hasattr(serv, 'id'): serv_id = serv.id
+    msg = ["Channel: {}".format(chan.name),
+           "Channel ID: {}".format(chan_id),
+           "Server: {}".format(serv.name),
+           "Server ID: {}".format(serv_id),
+           ]
+    return await client.send_message(mobj.channel, pre_text("\n".join(msg)))
             
 @register_command
 async def uptime(msg, mobj):

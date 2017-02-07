@@ -6,7 +6,7 @@
  total-bots
  start-bot
  reviver
- main
+ run-bots
  )
 
 ;; Define bots here - file to execute, keys, colors for logging
@@ -50,24 +50,27 @@
       (subprocess-kill subp #t)
       (vector-set! threads bot-id (start-bot bot-id)))))
 
-;; Gravekeeper main function to keep the subprocesses running
-(define (main)
-  (define threads (build-vector total-bots start-bot))
-  (define revive (reviver threads))
-  (logger "Gravekeeper thread initialized")
-  (sleep 30) ; wait for bots to start before looping
-  (define (loop x)
-    (when (= x 12)
-      (for-each
-       (λ (id)
-         (subprocess-kill (vector-ref threads id) #t)
-         (sleep 1)
-         (vector-set! threads id (start-bot id)))
-       (range total-bots))
+;; Run all bots in the bot list
+(define (run-bots)
+  (define (cust-loop)
+    (logger "Starting Custodian")
+    (define cust (make-custodian))
+    (parameterize ([current-custodian cust])
+      (define threads (build-vector total-bots start-bot))
+      (define revive (reviver threads))
+      (logger "Threads initialized")
+      (sleep 30)
+      (define (loop x)
+        (unless (= x 12)
+          (logger "Checking on bots")
+          (for-each revive (range total-bots))
+          (sleep 300)
+          (loop (add1 x))))
       (loop 0))
-    (for-each revive (range total-bots))
-    (sleep 300) ; number of seconds the gravekeeper should sleep
-    (loop (add1 x)))
-  (loop 0))
+    (logger "Shutting down Custodian")
+    (custodian-shutdown-all cust)
+    (sleep 30)
+    (cust-loop))
+  (cust-loop))
 
 ; end

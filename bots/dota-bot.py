@@ -7,6 +7,7 @@ Dota bot
 Utility functions for dota-related activities
 """
 
+from random import choice
 from botinfo import *
 from bs4 import BeautifulSoup as BS
 from requests import get as re_get
@@ -16,118 +17,118 @@ from requests import get as re_get
 # Include whether a hero is RANGED, MELEE, or MIXED
 # This will determine rules for melee/ranged bonus items
 HEROES = [
-    {"name": "Abaddon", "type": "melee"},
-    {"name": "Alchemist", "type": "melee"},
-    {"name": "Ancient Apparition", "type": "ranged"},
-    {"name": "Anti-Mage", "type": "melee"},
-    {"name": "Arc Warden", "type": "ranged"},
-    {"name": "Axe", "type": "melee"},
-    {"name": "Bane", "type": "ranged"},
-    {"name": "Batrider", "type": "ranged"},
-    {"name": "Beastmaster", "type": "melee"},
-    {"name": "Bloodseeker", "type": "melee"},
-    {"name": "Bounty Hunter", "type": "melee"},
-    {"name": "Brewmaster", "type": "melee"},
-    {"name": "Bristleback", "type": "melee"},
-    {"name": "Broodmother", "type": "melee"},
-    {"name": "Centaur Warrunner", "type": "melee"},
-    {"name": "Chaos Knight", "type": "melee"},
-    {"name": "Chen", "type": "ranged"},
-    {"name": "Clinkz", "type": "ranged"},
-    {"name": "Clockwerk", "type": "melee"},
-    {"name": "Crystal Maiden", "type": "melee"},
-    {"name": "Dark Seer", "type": "melee"},
-    {"name": "Dazzle", "type": "ranged"},
-    {"name": "Death Prophet", "type": "ranged"},
-    {"name": "Disruptor", "type": "ranged"},
-    {"name": "Doom", "type": "melee"},
-    {"name": "Dragon Knight", "type": "mixed"},
-    {"name": "Drow Ranger", "type": "ranged"},
-    {"name": "Earth Spirit", "type": "melee"},
-    {"name": "Earthshaker", "type": "melee"},
-    {"name": "Elder Titan", "type": "melee"},
-    {"name": "Ember Spirit", "type": "melee"},
-    {"name": "Enchantress", "type": "ranged"},
-    {"name": "Enigma", "type": "ranged"},
-    {"name": "Faceless Void", "type": "melee"},
-    {"name": "Gyrocopter", "type": "ranged"},
-    {"name": "Huskar", "type": "ranged"},
-    {"name": "Invoker", "type": "ranged"},
-    {"name": "Io", "type": "ranged"},
-    {"name": "Jakiro", "type": "ranged"},
-    {"name": "Juggernaut", "type": "melee"},
+    {"name": "Abaddon",             "type": "melee"},
+    {"name": "Alchemist",           "type": "melee"},
+    {"name": "Ancient Apparition",  "type": "ranged"},
+    {"name": "Anti-Mage",           "type": "melee"},
+    {"name": "Arc Warden",          "type": "ranged"},
+    {"name": "Axe",                 "type": "melee"},
+    {"name": "Bane",                "type": "ranged"},
+    {"name": "Batrider",            "type": "ranged"},
+    {"name": "Beastmaster",         "type": "melee"},
+    {"name": "Bloodseeker",         "type": "melee"},
+    {"name": "Bounty Hunter",       "type": "melee"},
+    {"name": "Brewmaster",          "type": "melee"},
+    {"name": "Bristleback",         "type": "melee"},
+    {"name": "Broodmother",         "type": "melee"},
+    {"name": "Centaur Warrunner",   "type": "melee"},
+    {"name": "Chaos Knight",        "type": "melee"},
+    {"name": "Chen",                "type": "ranged"},
+    {"name": "Clinkz",              "type": "ranged"},
+    {"name": "Clockwerk",           "type": "melee"},
+    {"name": "Crystal Maiden",      "type": "melee"},
+    {"name": "Dark Seer",           "type": "melee"},
+    {"name": "Dazzle",              "type": "ranged"},
+    {"name": "Death Prophet",       "type": "ranged"},
+    {"name": "Disruptor",           "type": "ranged"},
+    {"name": "Doom",                "type": "melee"},
+    {"name": "Dragon Knight",       "type": "mixed"},
+    {"name": "Drow Ranger",         "type": "ranged"},
+    {"name": "Earth Spirit",        "type": "melee"},
+    {"name": "Earthshaker",         "type": "melee"},
+    {"name": "Elder Titan",         "type": "melee"},
+    {"name": "Ember Spirit",        "type": "melee"},
+    {"name": "Enchantress",         "type": "ranged"},
+    {"name": "Enigma",              "type": "ranged"},
+    {"name": "Faceless Void",       "type": "melee"},
+    {"name": "Gyrocopter",          "type": "ranged"},
+    {"name": "Huskar",              "type": "ranged"},
+    {"name": "Invoker",             "type": "ranged"},
+    {"name": "Io",                  "type": "ranged"},
+    {"name": "Jakiro",              "type": "ranged"},
+    {"name": "Juggernaut",          "type": "melee"},
     {"name": "Keeper of the Light", "type": "ranged"},
-    {"name": "Kunkka", "type": "melee"},
-    {"name": "Legion Commander", "type": "melee"},
-    {"name": "Leshrac", "type": "ranged"},
-    {"name": "Lich", "type": "ranged"},
-    {"name": "Lifestealer", "type": "melee"},
-    {"name": "Lina", "type": "ranged"},
-    {"name": "Lion", "type": "ranged"},
-    {"name": "Lone Druid", "type": "mixed"},
-    {"name": "Luna", "type": "ranged"},
-    {"name": "Lycan", "type": "melee"},
-    {"name": "Magnus", "type": "melee"},
-    {"name": "Medusa", "type": "ranged"},
-    {"name": "Meepo", "type": "melee"},
-    {"name": "Mirana", "type": "ranged"},
-    {"name": "Monkey King", "type": "melee"},
-    {"name": "Morphling", "type": "ranged"},
-    {"name": "Naga Siren", "type": "melee"},
-    {"name": "Nature's Prophet", "type": "melee"},
-    {"name": "Necrophos", "type": "ranged"},
-    {"name": "Nightstalker", "type": "melee"},
-    {"name": "Nyx Assassin", "type": "melee"},
-    {"name": "Ogre Magi", "type": "melee"},
-    {"name": "Omniknight", "type": "melee"},
-    {"name": "Oracle", "type": "ranged"},
-    {"name": "Outworld Devourer", "type": "ranged"},
-    {"name": "Phantom Assassin", "type": "melee"},
-    {"name": "Phantom Lancer", "type": "melee"},
-    {"name": "Phoenix", "type": "ranged"},
-    {"name": "Puck", "type": "ranged"},
-    {"name": "Pudge", "type": "melee"},
-    {"name": "Pugna", "type": "ranged"},
-    {"name": "Queen of Pain", "type": "ranged"},
-    {"name": "Razor", "type": "ranged"},
-    {"name": "Riki", "type": "melee"},
-    {"name": "Rubick", "type": "ranged"},
-    {"name": "Sand King", "type": "melee"},
-    {"name": "Shadow Demon", "type": "ranged"},
-    {"name": "Shadow Fiend", "type": "ranged"},
-    {"name": "Shadow Shaman", "type": "ranged"},
-    {"name": "Silencer", "type": "ranged"},
-    {"name": "Skywrath Mage", "type": "ranged"},
-    {"name": "Slardar", "type": "melee"},
-    {"name": "Slark", "type": "melee"},
-    {"name": "Sniper", "type": "ranged"},
-    {"name": "Spectre", "type": "melee"},
-    {"name": "Spirit Breaker", "type": "melee"},
-    {"name": "Storm Spirit", "type": "ranged"},
-    {"name": "Sven", "type": "melee"},
-    {"name": "Techies", "type": "ranged"},
-    {"name": "Templar Assassin", "type": "ranged"},
-    {"name": "Terrorblade", "type": "mixed"},
-    {"name": "Tidehunter", "type": "melee"},
-    {"name": "Timbersaw", "type": "melee"},
-    {"name": "Tinker", "type": "ranged"},
-    {"name": "Tiny", "type": "melee"},
-    {"name": "Treant Protector", "type": "melee"},
-    {"name": "Troll Warlord", "type": "mixed"},
-    {"name": "Tusk", "type": "melee"},
-    {"name": "Underlord", "type": "melee"},
-    {"name": "Undying", "type": "melee"},
-    {"name": "Ursa", "type": "melee"},
-    {"name": "Vengeful Spirit", "type": "ranged"},
-    {"name": "Venomancer", "type": "ranged"},
-    {"name": "Viper", "type": "ranged"},
-    {"name": "Visage", "type": "ranged"},
-    {"name": "Warlock", "type": "ranged"},
-    {"name": "Weaver", "type": "ranged"},
-    {"name": "Windranger", "type": "ranged"},
-    {"name": "Winter Wyvern", "type": "mixed"},
-    {"name": "Wraith King", "type": "melee"},
-    {"name": "Zeus", "type": "ranged"},
+    {"name": "Kunkka",              "type": "melee"},
+    {"name": "Legion Commander",    "type": "melee"},
+    {"name": "Leshrac",             "type": "ranged"},
+    {"name": "Lich",                "type": "ranged"},
+    {"name": "Lifestealer",         "type": "melee"},
+    {"name": "Lina",                "type": "ranged"},
+    {"name": "Lion",                "type": "ranged"},
+    {"name": "Lone Druid",          "type": "mixed"},
+    {"name": "Luna",                "type": "ranged"},
+    {"name": "Lycan",               "type": "melee"},
+    {"name": "Magnus",              "type": "melee"},
+    {"name": "Medusa",              "type": "ranged"},
+    {"name": "Meepo",               "type": "melee"},
+    {"name": "Mirana",              "type": "ranged"},
+    {"name": "Monkey King",         "type": "melee"},
+    {"name": "Morphling",           "type": "ranged"},
+    {"name": "Naga Siren",          "type": "melee"},
+    {"name": "Nature's Prophet",    "type": "melee"},
+    {"name": "Necrophos",           "type": "ranged"},
+    {"name": "Nightstalker",        "type": "melee"},
+    {"name": "Nyx Assassin",        "type": "melee"},
+    {"name": "Ogre Magi",           "type": "melee"},
+    {"name": "Omniknight",          "type": "melee"},
+    {"name": "Oracle",              "type": "ranged"},
+    {"name": "Outworld Devourer",   "type": "ranged"},
+    {"name": "Phantom Assassin",    "type": "melee"},
+    {"name": "Phantom Lancer",      "type": "melee"},
+    {"name": "Phoenix",             "type": "ranged"},
+    {"name": "Puck",                "type": "ranged"},
+    {"name": "Pudge",               "type": "melee"},
+    {"name": "Pugna",               "type": "ranged"},
+    {"name": "Queen of Pain",       "type": "ranged"},
+    {"name": "Razor",               "type": "ranged"},
+    {"name": "Riki",                "type": "melee"},
+    {"name": "Rubick",              "type": "ranged"},
+    {"name": "Sand King",           "type": "melee"},
+    {"name": "Shadow Demon",        "type": "ranged"},
+    {"name": "Shadow Fiend",        "type": "ranged"},
+    {"name": "Shadow Shaman",       "type": "ranged"},
+    {"name": "Silencer",            "type": "ranged"},
+    {"name": "Skywrath Mage",       "type": "ranged"},
+    {"name": "Slardar",             "type": "melee"},
+    {"name": "Slark",               "type": "melee"},
+    {"name": "Sniper",              "type": "ranged"},
+    {"name": "Spectre",             "type": "melee"},
+    {"name": "Spirit Breaker",      "type": "melee"},
+    {"name": "Storm Spirit",        "type": "ranged"},
+    {"name": "Sven",                "type": "melee"},
+    {"name": "Techies",             "type": "ranged"},
+    {"name": "Templar Assassin",    "type": "ranged"},
+    {"name": "Terrorblade",         "type": "mixed"},
+    {"name": "Tidehunter",          "type": "melee"},
+    {"name": "Timbersaw",           "type": "melee"},
+    {"name": "Tinker",              "type": "ranged"},
+    {"name": "Tiny",                "type": "melee"},
+    {"name": "Treant Protector",    "type": "melee"},
+    {"name": "Troll Warlord",       "type": "mixed"},
+    {"name": "Tusk",                "type": "melee"},
+    {"name": "Underlord",           "type": "melee"},
+    {"name": "Undying",             "type": "melee"},
+    {"name": "Ursa",                "type": "melee"},
+    {"name": "Vengeful Spirit",     "type": "ranged"},
+    {"name": "Venomancer",          "type": "ranged"},
+    {"name": "Viper",               "type": "ranged"},
+    {"name": "Visage",              "type": "ranged"},
+    {"name": "Warlock",             "type": "ranged"},
+    {"name": "Weaver",              "type": "ranged"},
+    {"name": "Windranger",          "type": "ranged"},
+    {"name": "Winter Wyvern",       "type": "mixed"},
+    {"name": "Wraith King",         "type": "melee"},
+    {"name": "Zeus",                "type": "ranged"},
 ]
 
 # Boots to pick from
@@ -204,7 +205,8 @@ logger = create_logger(bot_name)
 
 # API endpoints go here
 TWITCH_API = ""
-OPENDOTA_API = ""
+OPENDOTA_URL = "https://opendota.com/matches"
+OPENDOTA_API = "https://api.opendota.com/api"
 YOUTUBE_URL = ""
 
 def get_latest_video(youtube_id):
@@ -228,17 +230,26 @@ async def challenge(msg, mobj):
     RULES: if you fail to meet the challenge, you lose coolness
     (Only takes into consideration med-high tier items (no gloves)
     Example: !challenge
-             -> Bloodseeker: Mana, Mekansm, Dagon, Glimmer Cape
+             -> Bloodseeker: Mana Booties, Mekansm, Dagon, Glimmer Cape
     """
     return
 
 @register_command
-async def register(msg, mobj):
+async def dotaid(msg, mobj):
     """
     Register's a user's Discord ID and associates it with a Dota ID
     This is used to retrieve a user's last played match from OpenDota 
+    The string must be tested against OpenDota's API to see if it's valid
     """
-    return
+    fname = bot_data(f"{mobj.author.id}.txt")
+    r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
+    if len(msg) > 30:
+        return await client.send_message(mobj.channel, "Bro that's too long")
+    if r.status_code != 200:
+        return await client.send_message(mobj.channel "Invalid Dota ID")
+    with open(fname, 'w') as f:
+        f.write(msg.strip())
+    return await client.send_message(mobj.channel, "Registered your Dota ID")
 
 @register_command
 async def lastmatch(msg, mobj):
@@ -247,7 +258,17 @@ async def lastmatch(msg, mobj):
     from the OpenDota API
     The user must first associate a Dota ID with !register to use this
     """
-    return
+    fname = bot_data(f"{mobj.author.id}.txt") 
+    dota_id = None
+    with open(fname, 'r') as f:
+        dota_id = f.read()
+    r = re_get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1") 
+    if r.status_code != 200:
+        return await client.send_message(mobj.channel, "Failed to get matches")
+    data = r.json()
+    m = data.pop(0)
+    match_id = data[0]['match_id']
+    return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
 
 @register_command
 async def streams(msg, mobj):
@@ -282,7 +303,7 @@ async def watafak(msg, mobj):
     return
 
 @register_command
-async def fails(msg, mobj):
+async def dotacinema(msg, mobj):
     """
     Retrieve the latest Fails video
     Realistically, DotaCinema does a lot more than just Fails

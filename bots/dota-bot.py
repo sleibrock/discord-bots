@@ -203,6 +203,7 @@ ITEMS = [
 bot_name = "dota-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
+bot_data = create_filegen(bot_name)
 
 # read the Twitch client ID key from the Key folder
 TWITCH_KEY = read_key("twitch")
@@ -252,14 +253,22 @@ async def dotaid(msg, mobj):
     This is used to retrieve a user's last played match from OpenDota 
     The string must be tested against OpenDota's API to see if it's valid
     """
-    fname = bot_data(f"{mobj.author.id}.txt")
-    r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
+    print("Here")
     if len(msg) > 30:
         return await client.send_message(mobj.channel, "Bro that's too long")
+
+    print("Here")
+    r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
     if r.status_code != 200:
         return await client.send_message(mobj.channel, "Invalid Dota ID")
+
+    print("here")
+    fname = bot_data(f"{mobj.author.id}.txt")
+    print(fname)
     with open(fname, 'w') as f:
         f.write(msg.strip())
+
+    print("Returning")
     return await client.send_message(mobj.channel, "Registered your Dota ID")
 
 @register_command

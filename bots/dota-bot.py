@@ -142,6 +142,7 @@ BOOTS = [
     {"name": "Arcane Boots", "price": 1300},
 ]
 
+
 # Optional tie-ins for certain types of characters
 MELEE_ONLY = [
     {"name": "Echo Saber", "price": 2650},
@@ -156,58 +157,62 @@ RANGED_ONLY = [
 # gold is required to reach your target (and possibly re-roll
 # if the GPM is just an impossibility for your given character)
 ITEMS = [
-    {"name": "Daedelus", "price": 5520},
-    {"name": "Abyssal Blade", "price": 6400},
-    {"name": "Monkey King Bar", "price": 5400},
-    {"name": "Eye of Skadi", "price": 5675},
-    {"name": "Bloodthorn", "price": 7195},
-    {"name": "Radiance", "price": 5150},
-    {"name": "Manta Style", "price": 4950},
-    {"name": "Battlefury", "price": 4500},
-    {"name": "Silver Edge", "price": 5100},
-    {"name": "Helm of the Dominator", "price": 1800},
-    {"name": "Mask of Madness", "price": 1900},
-    {"name": "Diffusal Blade", "price": 3150},
-    {"name": "Sange and Yasha", "price": 4100},
-    {"name": "Mjollnir", "price": 5700},
-    {"name": "Butterfly", "price": 5525},
-    {"name": "Blink Dagger", "price": 2250},
-    {"name": "Moon Shard", "price": 4000},
-    {"name": "Desolator", "price": 3500},
-    {"name": "Satanic", "price": 5800},
-    {"name": "Heaven's Halberd", "price": 3500},
-    {"name": "Blaemail", "price": 2200},
-    {"name": "Crimson Guard", "price": 3550},
-    {"name": "Black King Bar", "price": 3975},
-    {"name": "Shiva's Guard", "price": 4700},
-    {"name": "Lotus Orb", "price": 4000},
-    {"name": "Linken's Sphere", "price": 4800},
-    {"name": "Heart of Tarrasque", "price": 5500},
-    {"name": "Ethereal Blade", "price": 4700},
-    {"name": "Dagon", "price": 2720}, # do the calculation later
-    {"name": "Necronomicon", "price": 2650},
-    {"name": "Rod of Atos", "price": 3100},
+    {"name": "Daedelus",                  "price": 5520},
+    {"name": "Abyssal Blade",             "price": 6400},
+    {"name": "Monkey King Bar",           "price": 5400},
+    {"name": "Eye of Skadi",              "price": 5675},
+    {"name": "Bloodthorn",                "price": 7195},
+    {"name": "Radiance",                  "price": 5150},
+    {"name": "Manta Style",               "price": 4950},
+    {"name": "Battlefury",                "price": 4500},
+    {"name": "Silver Edge",               "price": 5100},
+    {"name": "Helm of the Dominator",     "price": 1800},
+    {"name": "Mask of Madness",           "price": 1900},
+    {"name": "Diffusal Blade",            "price": 3150},
+    {"name": "Sange and Yasha",           "price": 4100},
+    {"name": "Mjollnir",                  "price": 5700},
+    {"name": "Butterfly",                 "price": 5525},
+    {"name": "Blink Dagger",              "price": 2250},
+    {"name": "Moon Shard",                "price": 4000},
+    {"name": "Desolator",                 "price": 3500},
+    {"name": "Satanic",                   "price": 5800},
+    {"name": "Heaven's Halberd",          "price": 3500},
+    {"name": "Blaemail",                  "price": 2200},
+    {"name": "Crimson Guard",             "price": 3550},
+    {"name": "Black King Bar",            "price": 3975},
+    {"name": "Shiva's Guard",             "price": 4700},
+    {"name": "Lotus Orb",                 "price": 4000},
+    {"name": "Linken's Sphere",           "price": 4800},
+    {"name": "Heart of Tarrasque",        "price": 5500},
+    {"name": "Ethereal Blade",            "price": 4700},
+    {"name": "Dagon",                     "price": 2720}, # do the calculation later
+    {"name": "Necronomicon",              "price": 2650},
+    {"name": "Rod of Atos",               "price": 3100},
     {"name": "Eul's Scepter of Divinity", "price": 2750},
-    {"name": "Veil of Discord", "price": 2240},
-    {"name": "Aghanim's Scepter", "price": 4200},
-    {"name": "Bloodstone", "price": 4900},
-    {"name": "Refresher Orb", "price": 5200},
-    {"name": "Glimmer Cape","price": 1850},
-    {"name": "Aether Lens","price": 2350},
-    {"name": "Pipe of Insight","price": 3100},
-    {"name": "Solar Crest","price": 2625},
-    {"name": "Vladmir's Offering","price": 2275},
+    {"name": "Veil of Discord",           "price": 2240},
+    {"name": "Aghanim's Scepter",         "price": 4200},
+    {"name": "Bloodstone",                "price": 4900},
+    {"name": "Refresher Orb",             "price": 5200},
+    {"name": "Glimmer Cape",              "price": 1850},
+    {"name": "Aether Lens",               "price": 2350},
+    {"name": "Pipe of Insight",           "price": 3100},
+    {"name": "Solar Crest",               "price": 2625},
+    {"name": "Vladmir's Offering",        "price": 2275},
 ]
 
 bot_name = "dota-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
 
+# read the Twitch client ID key from the Key folder
+TWITCH_KEY = read_key("twitch")
+
 # API endpoints go here
-TWITCH_API = ""
+TWITCH_API   = "https://api.twitch.tv/kraken"
 OPENDOTA_URL = "https://opendota.com/matches"
 OPENDOTA_API = "https://api.opendota.com/api"
-YOUTUBE_URL = ""
+YOUTUBE_URL  = ""
+DOTA2_STRIMS = f"{TWITCH_API}/streams/?game=Dota 2&client_id={TWITCH_KEY}&limit=1"
 
 def get_latest_video(youtube_id):
     """
@@ -232,7 +237,13 @@ async def challenge(msg, mobj):
     Example: !challenge
              -> Bloodseeker: Mana Booties, Mekansm, Dagon, Glimmer Cape
     """
-    return
+    hero = choice(HEROES)
+    item_pool = ITEMS
+    if hero["type"] == "melee":
+        item_pool.extend(MELEE_ONLY)
+    else:
+        item_pool.extend(RANGED_ONLY)
+    return await client.send_message(mobj.channel, f"Play {hero['name']}")
 
 @register_command
 async def dotaid(msg, mobj):
@@ -246,7 +257,7 @@ async def dotaid(msg, mobj):
     if len(msg) > 30:
         return await client.send_message(mobj.channel, "Bro that's too long")
     if r.status_code != 200:
-        return await client.send_message(mobj.channel "Invalid Dota ID")
+        return await client.send_message(mobj.channel, "Invalid Dota ID")
     with open(fname, 'w') as f:
         f.write(msg.strip())
     return await client.send_message(mobj.channel, "Registered your Dota ID")
@@ -261,13 +272,12 @@ async def lastmatch(msg, mobj):
     fname = bot_data(f"{mobj.author.id}.txt") 
     dota_id = None
     with open(fname, 'r') as f:
-        dota_id = f.read()
+        dota_id = f.read().strip("\n")
     r = re_get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1") 
     if r.status_code != 200:
         return await client.send_message(mobj.channel, "Failed to get matches")
     data = r.json()
-    m = data.pop(0)
-    match_id = data[0]['match_id']
+    mid = data[0]['match_id']
     return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
 
 @register_command
@@ -276,15 +286,16 @@ async def streams(msg, mobj):
     Retrieve the top Dota Two stream from Twitch.tv
     (Other Stream services need not apply)
     """
+    r = re_get("https://api.twitch.tv/kraken/streams/?game=Dota 2&client_id={}")
     return
 
 # All youtube scrapes below
 @register_command
 async def bulldog(msg, mobj):
     """
-    Retrieve the latest video from Admiral Bulldog's YT
+    Tee Eye Winner admiralSkadoosh
     """
-    return
+    return await client.send_message(mobj.channel, ":admiralW:")
 
 @register_command
 async def sing_sing(msg, mobj):
@@ -313,7 +324,6 @@ async def dotacinema(msg, mobj):
 @register_command
 async def wodota(msg, mobj):
     """
-    Latest World of Dota video
     W E A R E E L E C T R I C
     """
     return
@@ -328,7 +338,7 @@ async def purge(msg, mobj):
 @register_command
 async def slacks(msg, mobj):
     """
-    From God himself, he brings to us thy glory
+    From God himself, he brings to us his holy incandescence
     """
     return
 

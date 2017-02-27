@@ -26,6 +26,11 @@ bot_name = "dumb-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
 
+# Twitch info here
+TWITCH = "https://api.twitch.tv/kraken"
+TKEY   = read_key("twitch")
+STRAMS = f"{TWITCH}/streams/?game={}&client_id={TKEY}&limit=1"
+
 @register_command
 async def howto(msg, mobj):
     """
@@ -47,30 +52,8 @@ async def rtd(msg, mobj):
         res = [randint(1, sides) for x in range(times)]
         return await client.send_message(mobj.channel, ", ".join(map(str, res)))
     except Exception as ex:
-        logger("Error: {}".format(ex))
+        logger(f"Error: {ex}")
     return await client.send_message(mobj.channel, "Error: bad input args")
-
-@register_command
-async def ddg(msg, mobj):
-    """
-    Search DuckDuckGo and post the first result
-    Example: !ddg let me google that for you
-    """
-    try:
-        if msg == "":
-            return await client.send_message(mobj.channel, "You didn't search for anything!")
-        msg.replace(" ", "%20") # replace spaces
-        url = "https://duckduckgo.com/html/?q={0}".format(msg)
-        bs = BS(re_get(url).text, "html.parser")
-        results = bs.find_all("div", class_="web-result")
-        if not results:
-            return await client.send_message(mobj.channel, "Couldn't find anything")
-        a = results[0].find("a", class_="result__a")
-        title, link = a.text, a["href"]
-        return await client.send_message(mobj.channel, "{} - {}".format(title, link))
-    except Exception as ex:
-        logger("Fail: {}".format(ex))
-    return await client.send_message(mobj.channel, "Failed to get the search")
 
 @register_command
 async def yt(msg, mobj):
@@ -98,10 +81,34 @@ async def yt(msg, mobj):
             i += 1
         if not found:
             return await client.send_message(mobj.channel, "Couldn't find a link")
-        return await client.send_message(mobj.channel, "https://youtube.com{}".format(href))
+        return await client.send_message(mobj.channel, f"https://youtube.com{href}")
     except Exception as ex:
         logger("Fail: {}".format(ex))
     return await client.send_message(mobj.channel, "Failed to request the search")
+
+@register_command
+async def streams(msg, mobj):
+    pass
+
+@register_command
+async def clipreg(msg, mobj):
+    """
+    Register a Twitch.tv username into the Clips registry
+    Used to bookmark names to Twitch accounts for ez access
+    Must test the urls given to make sure it's a real Twitch account
+    Example: !clipreg bulldog admiralbulldog
+    """
+    pass
+
+@register_command
+async def clips(msg, mobj):
+    """
+    Fetch a clip from a certain registered bookmark
+    If no bookmark given (but entries exist), get a random clip
+    Example: !clips summit1g
+           -> <link to random popular clip>
+    """
+    pass
 
 # Last step - register events then run
 setup_all_events(client, bot_name, logger)

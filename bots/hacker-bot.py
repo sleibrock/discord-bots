@@ -110,7 +110,7 @@ def compose(*list_of_funcs):
     """
     if not isinstance(list_of_funcs, (tuple, list)):
         raise SyntaxError("compose: No list given")
-    if not all(filter(callable, list_of_funcs)):
+    if not all(map(callable, list_of_funcs)):
         raise SyntaxError("compose: Non-composable type given")
     def whatever(in_var):
         for func in list_of_funcs:
@@ -126,7 +126,7 @@ def compareduce(f, *lst):
     values for each pair in the computation chain
     """
     if len(lst) <= 1:
-        raise SyntaxError("{}: List too small for evaluation".format(f.__name__))
+        raise SyntaxError(f"{f.__name__}: List too small for evaluation")
     first_value = lst[0]
     for next_value in lst[1:]:
         if not f(first_value, next_value):
@@ -226,8 +226,9 @@ def standard_env():
         'number?'    : lambda x      : isinstance(x, Number),
         'symbol?'    : lambda x      : isinstance(x, Symbol),
         'string?'    : lambda x      : isinstance(x, str),
-        'odd?'       : lambda x      : bool(x&1),
-        'even?'      : lambda x      : not bool(x&1),
+        'bool?'      : lambda x      : isinstance(x, bool),
+        'odd?'       : lambda x      : bool((x % 2) == 1),
+        'even?'      : lambda x      : not bool((x %2) == 1),
         'list?'      : lambda x      : isinstance(x, list),
         'tuple?'     : lambda x      : isinstance(x, tuple),
         'set?'       : lambda x      : isinstance(x, set),
@@ -301,11 +302,12 @@ async def info(msg, mobj):
     if hasattr(serv, 'name'): serv_name = serv.name
     if hasattr(chan, 'id'): chan_id = chan.id
     if hasattr(serv, 'id'): serv_id = serv.id
-    msg = ["Channel: {}".format(chan.name),
-           "Channel ID: {}".format(chan_id),
-           "Server: {}".format(serv.name),
-           "Server ID: {}".format(serv_id),
-           ]
+    msg = [
+        f"Channel: {chan.name}",
+        f"Channel ID: {chan_id}",
+        f"Server: {serv.name}",
+        f"Server ID: {serv_id}",
+    ]
     return await client.send_message(mobj.channel, pre_text("\n".join(msg)))
             
 @register_command

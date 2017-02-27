@@ -4,13 +4,15 @@
 """
 Dota bot
 
-Utility functions for dota-related activities
+This bot's goal is aimed at Dota-related activities
 """
 
 from random import choice
 from botinfo import *
 from bs4 import BeautifulSoup as BS
 from requests import get as re_get
+from json import load as jload
+from pathlib import Path
 
 # build a static list of heroes/items here
 # Instead of waiting on a net request, just write them all
@@ -126,7 +128,7 @@ HEROES = [
     {"name": "Warlock",             "type": "ranged"},
     {"name": "Weaver",              "type": "ranged"},
     {"name": "Windranger",          "type": "ranged"},
-    {"name": "Winter Wyvern",       "type": "mixed"},
+    {"name": "Winter Wyvern",       "type": "ranged"},
     {"name": "Wraith King",         "type": "melee"},
     {"name": "Zeus",                "type": "ranged"},
 ]
@@ -140,6 +142,7 @@ BOOTS = [
     {"name": "Power Treads", "price": 1350},
     {"name": "Boots of Travel", "price": 2400},
     {"name": "Arcane Boots", "price": 1300},
+    {"name": "Guardian Greaves", "price": 5250},
 ]
 
 
@@ -149,7 +152,7 @@ MELEE_ONLY = [
 ]
 
 RANGED_ONLY = [
-    {"name": "Hurricane Pike", "price": 4375},
+    {"name": "Dragon Lance", "price": 1900},
 ]
 
 # Rapier won't be included as it can lead to many game losses
@@ -179,13 +182,14 @@ ITEMS = [
     {"name": "Heaven's Halberd",          "price": 3500},
     {"name": "Blaemail",                  "price": 2200},
     {"name": "Crimson Guard",             "price": 3550},
+    {"name": "Assault Cuirass",           "price": 5250},
     {"name": "Black King Bar",            "price": 3975},
     {"name": "Shiva's Guard",             "price": 4700},
     {"name": "Lotus Orb",                 "price": 4000},
     {"name": "Linken's Sphere",           "price": 4800},
     {"name": "Heart of Tarrasque",        "price": 5500},
     {"name": "Ethereal Blade",            "price": 4700},
-    {"name": "Dagon",                     "price": 2720}, # do the calculation later
+    {"name": "Dagon",                     "price": 2720},
     {"name": "Necronomicon",              "price": 2650},
     {"name": "Rod of Atos",               "price": 3100},
     {"name": "Eul's Scepter of Divinity", "price": 2750},
@@ -195,52 +199,67 @@ ITEMS = [
     {"name": "Refresher Orb",             "price": 5200},
     {"name": "Glimmer Cape",              "price": 1850},
     {"name": "Aether Lens",               "price": 2350},
+    {"name": "Force Staff",               "price": 2250},
     {"name": "Pipe of Insight",           "price": 3100},
     {"name": "Solar Crest",               "price": 2625},
     {"name": "Vladmir's Offering",        "price": 2275},
 ]
 
 bot_name = "dota-bot"
-client = discord.Client()
-logger = create_logger(bot_name)
+client   = discord.Client()
+logger   = create_logger(bot_name)
 bot_data = create_filegen(bot_name)
 
-# read the Twitch client ID key from the Key folder
-TWITCH_KEY = read_key("twitch")
-
 # API endpoints go here
-TWITCH_API   = "https://api.twitch.tv/kraken"
 OPENDOTA_URL = "https://opendota.com/matches"
 OPENDOTA_API = "https://api.opendota.com/api"
-YOUTUBE_URL  = ""
 DOTA2_STRIMS = f"{TWITCH_API}/streams/?game=Dota 2&client_id={TWITCH_KEY}&limit=1"
 
-def get_latest_video(youtube_id):
-    """
-    Retrieve the latest video from a YouTube user via scraping
-    """
-    pass
+# Prefetch a list of heroes from OpenDota
+# Cache it to disk just to avoid making too many reqs
+hero_dataf = Path(bot_data("heroes.json"))
+if not hero_dataf.is_file():
+    r = re_get("{OPENDOTA_API}/heroes")
+    if r.status_code != 200:
+        print("Error pre-fetching hero data (code: {r.status_code})")
+    with open(hero_dataf, "w") as f:
+        f.write(r.json())
+
+hero_data = jload(hero_dataf)
 
 @register_command
 async def osfrog(msg, mobj):
     """
     Patch 7.02: help string was removed from Captain's Mode 
     """
+    osfrogs = [
+        "Added Monkey King to the game",
+        "Reduced Lone Druid's respawn talent -50s to -40s",
+    ]
     return await client.send_message(mobj.channel, ":frog:")
 
 @register_command
 async def challenge(msg, mobj):
     """
     The Challenge
-    Picks a random Dota Two hero, boots, and three items you must buy
-    RULES: if you fail to meet the challenge, you lose coolness
-    (Only takes into consideration med-high tier items (no gloves)
+    Picks a random Dota 2 hero to play and gives you 3 items to work towards
+    Optional: supply a hero and get the 3 items to play (sd/ap/rd applicable)
     Example: !challenge
-             -> Bloodseeker: Mana Booties, Mekansm, Dagon, Glimmer Cape
+             -> Bloodseeker: Guardian Greaves, Abyssal Blade, Dagon 
     """
-    hero = choice(HEROES)
+    hs = msg.strip().lower().capitalize()
+    if hs != "":
+        search = [h for h in HEROES if h["name"] == hs]
+        if not search:
+            return await client.send_message(mobj.channel, "Couldn't find hero")
+        hero = search[0]
+    else:
+        hero = choice(HEROES)
     item_pool = ITEMS
-    if hero["type"] == "melee":
+    if hero["type"] == "mixed":
+        item_pool.extend(MELEE_ONLY)
+        item_pool.extend(RANGED_ONLY)
+    elif hero["type"] == "melee":
         item_pool.extend(MELEE_ONLY)
     else:
         item_pool.extend(RANGED_ONLY)
@@ -302,88 +321,6 @@ async def lastmatch(msg, mobj):
     pname = player["personaname"]
     
     return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
-
-@register_command
-async def streams(msg, mobj):
-    """
-    Retrieve the top Dota Two stream from Twitch.tv
-    (Other Stream services need not apply)
-    """
-    r = re_get("https://api.twitch.tv/kraken/streams/?game=Dota 2&client_id={}")
-    return
-
-# All youtube scrapes below
-@register_command
-async def bulldog(msg, mobj):
-    """
-    Tee Eye Winner admiralSkadoosh
-    """
-    return await client.send_message(mobj.channel, ":admiralW:")
-
-@register_command
-async def sing_sing(msg, mobj):
-    """
-    Retrieve the latest video from SingSing
-    Sing uploads a lot of videos so there's something to be had usually
-    """
-    return
-
-@register_command
-async def watafak(msg, mobj):
-    """
-    Retrieve the latest Dota Watafak video
-    Brought to you buy GameLeap and G2A dot com
-    """
-    return
-
-@register_command
-async def dotacinema(msg, mobj):
-    """
-    Retrieve the latest Fails video
-    Realistically, DotaCinema does a lot more than just Fails
-    """
-    return
-
-@register_command
-async def wodota(msg, mobj):
-    """
-    W E A R E E L E C T R I C
-    """
-    return
-
-@register_command
-async def purge(msg, mobj):
-    """
-    Yellow and this is the latest video from Purge
-    """
-    return
-
-@register_command
-async def slacks(msg, mobj):
-    """
-    From God himself, he brings to us his holy incandescence
-    """
-    return
-
-@register_command
-async def divine(msg, mobj):
-    """
-    Dota 2 Divine memes R us
-    """
-    return
-
-async def clarity(msg, mobj):
-    """
-    Dota 2 Clarity, a sane Dota 2 channel
-    """
-    return
-
-@register_command
-async def moonduck(msg, mobj):
-    """
-    The return of the duck
-    """
-    return
 
 setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":

@@ -287,6 +287,20 @@ async def lastmatch(msg, mobj):
         return await client.send_message(mobj.channel, "Failed to get matches")
     data = r.json()
     mid = data[0]['match_id']
+    mr = re_get(f"{OPENDOTA_API}/matches/{mid}")
+    if mr.status_code != 200:
+        return await client.send_message(mobj.channel, "Error retrieving data")
+
+    # Find the player object in the players property
+    mdata = mr.json()
+    players = mdata["players"]
+    pfilter = [p for p in players if p["account_id"] == dota_id]
+    if not user:
+        return await client.send_message(mobj.channel, f"Couldn't find user (???)")
+    player = pfilter[0]
+    vicmsg = "won" if player["win"] == "1" else "lost"
+    pname = player["personaname"]
+    
     return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
 
 @register_command

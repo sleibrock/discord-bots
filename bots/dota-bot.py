@@ -213,7 +213,6 @@ bot_data = create_filegen(bot_name)
 # API endpoints go here
 OPENDOTA_URL = "https://opendota.com/matches"
 OPENDOTA_API = "https://api.opendota.com/api"
-DOTA2_STRIMS = f"{TWITCH_API}/streams/?game=Dota 2&client_id={TWITCH_KEY}&limit=1"
 
 # Prefetch a list of heroes from OpenDota
 # Cache it to disk just to avoid making too many reqs

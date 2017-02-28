@@ -17,7 +17,6 @@
     (list "python"    "bots/graph-bot.py")
     (list "python"   "bots/hacker-bot.py")
     (list "python"  "bots/janitor-bot.py")
-    (list "node"    "bots/FishFactBot.js")
     ))
 (define total-bots (vector-length bots)) ; store how many have been set up
 (define fstring "[\033[38;5;~am~a\033[0m @ ~a:~a:~a] ~a")

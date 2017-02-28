@@ -29,7 +29,7 @@ logger = create_logger(bot_name)
 # Twitch info here
 TWITCH = "https://api.twitch.tv/kraken"
 TKEY   = read_key("twitch")
-STRAMS = f"{TWITCH}/streams/?game={}&client_id={TKEY}&limit=1"
+STRAMS = f"{TWITCH}/streams/?game={'{}'}&client_id={TKEY}&limit=1"
 
 @register_command
 async def howto(msg, mobj):

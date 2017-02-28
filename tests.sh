@@ -1,13 +1,8 @@
 #!/bin/sh
 
-for f in src/*.py;
+for f in bots/*.py;
 do
     python -m py_compile $f
-done
-
-for f in src/*.js;
-do
-    node -c $f
 done
 
 echo "Done"

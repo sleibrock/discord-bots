@@ -218,9 +218,9 @@ OPENDOTA_API = "https://api.opendota.com/api"
 # Cache it to disk just to avoid making too many reqs
 hero_dataf = Path(bot_data("heroes.json"))
 if not hero_dataf.is_file():
-    r = re_get("{OPENDOTA_API}/heroes")
+    r = re_get(f"{OPENDOTA_API}/heroes")
     if r.status_code != 200:
-        print("Error pre-fetching hero data (code: {r.status_code})")
+        print(f"Error pre-fetching hero data (code: {r.status_code})")
     with open(hero_dataf, "w") as f:
         f.write(r.json())
 
@@ -246,6 +246,7 @@ async def challenge(msg, mobj):
     Example: !challenge
              -> Bloodseeker: Guardian Greaves, Abyssal Blade, Dagon 
     """
+    msg = []
     hs = msg.strip().lower().capitalize()
     if hs != "":
         search = [h for h in HEROES if h["name"] == hs]
@@ -254,6 +255,8 @@ async def challenge(msg, mobj):
         hero = search[0]
     else:
         hero = choice(HEROES)
+        msg.append(f"Hero: {hero['name']}")
+
     item_pool = ITEMS
     if hero["type"] == "mixed":
         item_pool.extend(MELEE_ONLY)
@@ -262,7 +265,19 @@ async def challenge(msg, mobj):
         item_pool.extend(MELEE_ONLY)
     else:
         item_pool.extend(RANGED_ONLY)
-    return await client.send_message(mobj.channel, f"Play {hero['name']}")
+
+    # Start filling the pool with items
+    boots = choice(BOOTS)
+    picked_items = []
+    while len(picked_items) < 3:
+        picked_items.append(choice(item_pool))
+        shuffle(item_pool)
+
+    msg.append(f"Hero: {hero['name']}")
+    msg.append(f"Items: {', '.join([i['name'] for i in picked_items])}")
+    msg.append(f"Total cost: {sum([i['price'] for i in picked_items])}")
+    
+    return await client.send_message(mobj.channel, "\n".join(msg))
 
 @register_command
 async def dotaid(msg, mobj):
@@ -316,8 +331,34 @@ async def lastmatch(msg, mobj):
     if not user:
         return await client.send_message(mobj.channel, f"Couldn't find user (???)")
     player = pfilter[0]
-    vicmsg = "won" if player["win"] == "1" else "lost"
+    victory = "won" if player["win"] == "1" else "lost"
+
+    # Start grabbing details
     pname = player["personaname"]
+    heroid = player["heroid"]
+    kills = player["kills"]
+    deaths = player["deaths"]
+    assists = player["assists"]
+    gpm = player["gold_per_min"]
+    damage_dealt = player["hero_damage"] 
+
+    # Grab bounty runes picked up
+    bounties = 0
+
+    # Grab messages sent in all chat
+    allchat_count = 0
+    acp = 0
+
+    # Get team's kills and calculate kill participation
+    ts = 0
+    kp = 0
+
+    lines = []
+    lines.append(f"{pname} {victory} as {hero_name}")
+    lines.append(f"KDA: {kills}/{deaths}/{assists}  GPM: {gpm}")
+    lines.append(f"Total damage dealt: {damage_dealth}")
+    lines.append(f"Bounty runes picked up: {bounties}")
+    lines.append(f"Messages sent in allchat: {allchat_count} ({acp}% of allchat)")
     
     return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
 

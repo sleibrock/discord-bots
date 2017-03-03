@@ -145,7 +145,6 @@ BOOTS = [
     {"name": "Guardian Greaves", "price": 5250},
 ]
 
-
 # Optional tie-ins for certain types of characters
 MELEE_ONLY = [
     {"name": "Echo Saber", "price": 2650},
@@ -235,7 +234,7 @@ async def osfrog(msg, mobj):
         "Added Monkey King to the game",
         "Reduced Lone Druid's respawn talent -50s to -40s",
     ]
-    return await client.send_message(mobj.channel, ":frog:")
+    return await client.send_message(mobj.channel, choice(osfrogs))
 
 @register_command
 async def challenge(msg, mobj):
@@ -265,12 +264,13 @@ async def challenge(msg, mobj):
         item_pool.extend(MELEE_ONLY)
     else:
         item_pool.extend(RANGED_ONLY)
+    shuffle(item_pool)
 
     # Start filling the pool with items
     boots = choice(BOOTS)
     picked_items = []
     while len(picked_items) < 3:
-        picked_items.append(choice(item_pool))
+        picked_items.append(item_pool.pop(0))
         shuffle(item_pool)
 
     msg.append(f"Hero: {hero['name']}")
@@ -280,22 +280,19 @@ async def challenge(msg, mobj):
     return await client.send_message(mobj.channel, "\n".join(msg))
 
 @register_command
-async def dotaid(msg, mobj):
+async def dota_id(msg, mobj):
     """
     Register's a user's Discord ID and associates it with a Dota ID
     This is used to retrieve a user's last played match from OpenDota 
     The string must be tested against OpenDota's API to see if it's valid
     """
-    print("Here")
     if len(msg) > 30:
         return await client.send_message(mobj.channel, "Bro that's too long")
 
-    print("Here")
     r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
     if r.status_code != 200:
         return await client.send_message(mobj.channel, "Invalid Dota ID")
 
-    print("here")
     fname = bot_data(f"{mobj.author.id}.txt")
     print(fname)
     with open(fname, 'w') as f:
@@ -309,58 +306,84 @@ async def lastmatch(msg, mobj):
     """
     Fetch a user's ID from the FS and yield the last played match
     from the OpenDota API
-    The user must first associate a Dota ID with !register to use this
+    The user must first associate a Dota ID with !dota_id to use this
     """
     fname = bot_data(f"{mobj.author.id}.txt") 
     dota_id = None
     with open(fname, 'r') as f:
         dota_id = f.read().strip("\n")
-    r = re_get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1") 
+
+    r    = re_get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1") 
     if r.status_code != 200:
         return await client.send_message(mobj.channel, "Failed to get matches")
+
     data = r.json()
-    mid = data[0]['match_id']
-    mr = re_get(f"{OPENDOTA_API}/matches/{mid}")
+    mid  = data[0]['match_id']
+    mr   = re_get(f"{OPENDOTA_API}/matches/{mid}")
     if mr.status_code != 200:
         return await client.send_message(mobj.channel, "Error retrieving data")
 
     # Find the player object in the players property
-    mdata = mr.json()
+    mdata   = mr.json()
     players = mdata["players"]
     pfilter = [p for p in players if p["account_id"] == dota_id]
     if not user:
         return await client.send_message(mobj.channel, f"Couldn't find user (???)")
-    player = pfilter[0]
-    victory = "won" if player["win"] == "1" else "lost"
+    player  = pfilter[0]
+    victory = "won" if player["win"] == 1 else "lost"
 
     # Start grabbing details
-    pname = player["personaname"]
-    heroid = player["heroid"]
-    kills = player["kills"]
-    deaths = player["deaths"]
-    assists = player["assists"]
-    gpm = player["gold_per_min"]
-    damage_dealt = player["hero_damage"] 
+    pname        = player["personaname"]
+    heroid       = player["heroid"]
+    kills        = player["kills"]
+    deaths       = player["deaths"]
+    assists      = player["assists"]
+    gpm          = player["gold_per_min"]
+    damage_dealt = player["hero_damage"]
+    team         = player["isRadiant"] # t if Rad, f if Dire
+    kda          = float(kills+assists) / deaths
 
-    # Grab bounty runes picked up
-    bounties = 0
+    # Grab Ping details of entire team
+    ppings      = player["pings"]
+    total_pings = sum([p["pings"] for p in players if p["isRadiant"] == team])
+    pingpc      = float(ppings) / total_pings
+
+    # Grab bounty runes picked up (bounty is ID# 5)
+    bounties = player["runes"].get(5, 0)
+    all_bounties = sum([p["runes"].get(5, 0) for p in players])
+    bcp = float(bounties) / all_bounties
 
     # Grab messages sent in all chat
-    allchat_count = 0
-    acp = 0
+    allchat = mdata["chat"]
+    allchat_count = len([m for m in allchat if m["unit"] = pname])
+    acp = (float(allchat_count) / len(allchat)) * 100.0
 
     # Get team's kills and calculate kill participation
-    ts = 0
-    kp = 0
+    ts = mdata["radiant_score"] if team else mdata["dire_score"]
+    kp = float(kills+assists) / ts
 
     lines = []
     lines.append(f"{pname} {victory} as {hero_name}")
-    lines.append(f"KDA: {kills}/{deaths}/{assists}  GPM: {gpm}")
-    lines.append(f"Total damage dealt: {damage_dealth}")
-    lines.append(f"Bounty runes picked up: {bounties}")
-    lines.append(f"Messages sent in allchat: {allchat_count} ({acp}% of allchat)")
+    lines.append(f"Score: {kills}/{deaths}/{assists}  KDA: {kda}  GPM: {gpm}")
+    lines.append(f"Total damage dealt: {damage_dealt}")
+
+    if bounties:
+        lines.append(f"Bounty runes picked: {bounties} ({bcp}% of all bounties)")
+
+    if allchat_count: 
+        lines.append(f"Allchat count: {allchat_count} ({acp}% of allchat)")
+
+    if ppings:
+        lines.append(f"Pings spammed: {ppings} ({pingpc}% of team)")
     
     return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
+
+@register_command
+def last100(msg, mobj):
+    """
+    Report winrate stats in the last 100 matches
+    """
+    pass
 
 setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":

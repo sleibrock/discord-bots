@@ -3,6 +3,8 @@
 
 """
 Packages to use across bot programs
+
+TODO: perhaps use PathLib instead of os.path.join
 """
 
 import discord
@@ -36,13 +38,19 @@ char_map = {" ": "%20", "'": "%27", "`": "%60", "%": "%25", "&": "%26",
 bad_words = ["fuck", "cock", "child", "kiddy", "porn", "pron",
              "masturbate", "shit", "piss", "anal", "cum", "wank"]
 
+def req_join_link(client):
+    """
+    Return an OAuth URL upon request (just to have this utility)
+    """
+    return discord.utils.oauth_url(client.user.id)
+
 def display_url_when_no_servers(client, logger):
     """
     Print a clickable URL when the bot sees no servers active
     This is to defeat the previous method of creating bot links
     """
-    if len(client.servers) == 0:
-        logger("Link: {}".format(discord.utils.oauth_url(client.user.id)))
+    if not client.servers:
+        logger("Link: {}".format(req_join_link(client)))
     return
 
 def contains_badwords(string):
@@ -221,17 +229,18 @@ def read_lines(file_name):
 
 def write_lines(file_name, lines):
     """
-    Inverse of :read_lines, just do the opposite
+    Inverse of read_lines(), just do the opposite
     True if written, False otherwise
     """
     try:
         with open(file_name, "w") as f:
-            f.writelines("\n".join([line.strip().replace("\n","") for line in lines
-                               if line.strip().replace("\n","") != ""]))
+            f.writelines("\n".join([
+                line.strip().replace("\n","") for line in lines
+                if line.strip().replace("\n","") != ""
+            ]))
     except Exception:
         return False
     return True
-    
 
 def create_filegen(bot_name):
     """

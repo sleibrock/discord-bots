@@ -8,7 +8,7 @@ TODO: perhaps use PathLib instead of os.path.join
 """
 
 import discord
-from discord.ext import commands
+from discord import Embed
 import asyncio
 from subprocess import getstatusoutput
 from time import strftime, localtime

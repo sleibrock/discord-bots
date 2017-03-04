@@ -11,7 +11,7 @@ from random import choice
 from botinfo import *
 from bs4 import BeautifulSoup as BS
 from requests import get as re_get
-from json import load as jload
+from json import load as jload, dump as jdump
 from pathlib import Path
 
 # build a static list of heroes/items here
@@ -215,16 +215,22 @@ OPENDOTA_API = "https://api.opendota.com/api"
 
 # Prefetch a list of heroes from OpenDota
 # Cache it to disk just to avoid making too many reqs
+hero_data_cached = False
 hero_dataf = Path(bot_data("heroes.json"))
-if not hero_dataf.is_file():
+
+# Check if the file exists in the system
+# Else load the JSON from a request
+if hero_dataf.is_file():
+    hero_data_cached = True
+    with open(hero_dataf, "r") as f:
+        hero_data = jload(f)
+else:
     r = re_get(f"{OPENDOTA_API}/heroes")
     if r.status_code != 200:
         print(f"Error pre-fetching hero data (code: {r.status_code})")
-    with open(hero_dataf, "w") as f:
-        f.write(r.json())
-
-hero_data = jload(hero_dataf)
-
+    hero_data_cached = False 
+    hero_data = r.json()
+    
 @register_command
 async def osfrog(msg, mobj):
     """
@@ -309,6 +315,8 @@ async def lastmatch(msg, mobj):
     The user must first associate a Dota ID with !dota_id to use this
     """
     fname = bot_data(f"{mobj.author.id}.txt") 
+    if not fname:
+        return await client.send_message(mobj.channel, "Register your ID first")
     dota_id = None
     with open(fname, 'r') as f:
         dota_id = f.read().strip("\n")
@@ -316,8 +324,8 @@ async def lastmatch(msg, mobj):
     r    = re_get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1") 
     if r.status_code != 200:
         return await client.send_message(mobj.channel, "Failed to get matches")
-
     data = r.json()
+
     mid  = data[0]['match_id']
     mr   = re_get(f"{OPENDOTA_API}/matches/{mid}")
     if mr.status_code != 200:
@@ -326,57 +334,85 @@ async def lastmatch(msg, mobj):
     # Find the player object in the players property
     mdata   = mr.json()
     players = mdata["players"]
-    pfilter = [p for p in players if p["account_id"] == dota_id]
-    if not user:
+    pfilter = [p for p in players if str(p["account_id"]) == dota_id]
+    if not pfilter:
         return await client.send_message(mobj.channel, f"Couldn't find user (???)")
     player  = pfilter[0]
     victory = "won" if player["win"] == 1 else "lost"
 
     # Start grabbing details
     pname        = player["personaname"]
-    heroid       = player["heroid"]
-    kills        = player["kills"]
-    deaths       = player["deaths"]
-    assists      = player["assists"]
+    heroid       = player["hero_id"]
+    k            = player["kills"]
+    d            = player["deaths"]
+    a            = player["assists"]
+    kda          = player["kda"] 
     gpm          = player["gold_per_min"]
     damage_dealt = player["hero_damage"]
     team         = player["isRadiant"] # t if Rad, f if Dire
-    kda          = float(kills+assists) / deaths
+
+    hero_filter = [h for h in hero_data if h["id"] == heroid]
+    if not hero_filter:
+        return await client.send_message(mobj.channel, f"Can't find hero {heroid}")
+    hero_name = hero_filter[0]["localized_name"]
 
     # Grab Ping details of entire team
     ppings      = player["pings"]
     total_pings = sum([p["pings"] for p in players if p["isRadiant"] == team])
-    pingpc      = float(ppings) / total_pings
+    pingpc      = round((float(ppings) / total_pings) * 100.0, 2)
 
     # Grab bounty runes picked up (bounty is ID# 5)
-    bounties = player["runes"].get(5, 0)
-    all_bounties = sum([p["runes"].get(5, 0) for p in players])
-    bcp = float(bounties) / all_bounties
+    bounties = player["runes"].get("5", 0)
+    all_bounties = sum([p["runes"].get("5", 0) for p in players])
+    bcp = round((float(bounties) / all_bounties) * 100.0, 2)
 
     # Grab messages sent in all chat
     allchat = mdata["chat"]
-    allchat_count = len([m for m in allchat if m["unit"] = pname])
-    acp = (float(allchat_count) / len(allchat)) * 100.0
+    allchat_msgs = sorted(
+        [m for m in allchat if m["unit"] == pname],
+        key=lambda d: len(d["key"]),
+        reverse=True
+    )
+    acp = round((float(len(allchat_msgs)) / len(allchat)) * 100.0, 2)
+
+    allchat_longest = ""
+    if allchat_msgs:
+        allchat_longest = allchat_msgs[0]['key']
 
     # Get team's kills and calculate kill participation
     ts = mdata["radiant_score"] if team else mdata["dire_score"]
-    kp = float(kills+assists) / ts
+    kp = round(float(k+a) / ts, 2)
 
-    lines = []
-    lines.append(f"{pname} {victory} as {hero_name}")
-    lines.append(f"Score: {kills}/{deaths}/{assists}  KDA: {kda}  GPM: {gpm}")
-    lines.append(f"Total damage dealt: {damage_dealt}")
+    # Create an embed inside of Discord
+    emb = Embed(
+        title=f"Match {mid}",
+        url=f"{OPENDOTA_URL}/{mid}",
+        description=f"{pname} {victory} as **{hero_name}**",
+        color=0x993925
+    )
+
+    # Set the embed image in the corner
+    # emb.set_thumbnail(url="https://lol.com/lol.jpg")
+
+    emb.add_field(name="Score", value=f"{k}/{d}/{a} (KDA:{kda}, GPM:{gpm})")
 
     if bounties:
-        lines.append(f"Bounty runes picked: {bounties} ({bcp}% of all bounties)")
-
-    if allchat_count: 
-        lines.append(f"Allchat count: {allchat_count} ({acp}% of allchat)")
+        emb.add_field(name="Bounty Runes Collected",
+                      value=f"{bounties} ({bcp}% of all bounties)")
 
     if ppings:
-        lines.append(f"Pings spammed: {ppings} ({pingpc}% of team)")
-    
-    return await client.send_message(mobj.channel, f"{OPENDOTA_URL}/{mid}")
+        emb.add_field(name="Ping Stats",
+                      value=f"{ppings} ({pingpc}% of team)")
+
+    if allchat_msgs:
+        emb.add_field(name="Allchat Stats",
+                      value=f"{len(allchat_msgs)} ({acp}% of allchat)")
+        emb.add_field(name="Longest Quote",
+                      value=f"*'{allchat_longest}'* -{pname}")
+
+    emb.set_footer(text=f"Provided by OpenDota API")
+
+    return await client.send_message(mobj.channel, embed=emb)
 
 @register_command
 def last100(msg, mobj):
@@ -386,6 +422,13 @@ def last100(msg, mobj):
     pass
 
 setup_all_events(client, bot_name, logger)
+
+# Write the bot data to cache if it isn't there
+# Has to be done here to await creating the bot data folder
+if not hero_data_cached:
+   with open(hero_dataf, "w") as f:
+       jdump(hero_data, f)
+ 
 if __name__ == "__main__":
     run_the_bot(client, bot_name, logger)
 

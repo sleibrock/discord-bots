@@ -72,4 +72,7 @@
     (cust-loop))
   (cust-loop))
 
+(module+ main
+  (run-bots))
+
 ; end

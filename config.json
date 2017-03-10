@@ -1,0 +1,13 @@
+{
+    "sleep_time": 30,
+    "sleep_count": 12,
+    "hard_restarts": true,
+    "init_sleep": 30,
+    "bots": [
+	{"python": "bots/dota-bot.py"},
+	{"python": "bots/dumb-bot.py"},
+	{"python": "bots/graph-bot.py"},
+	{"python": "bots/hacker-bot.py"},
+	{"python": "bots/janitor-bot.py"}
+    ]
+}

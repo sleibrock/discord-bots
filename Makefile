@@ -1,9 +1,7 @@
 run:
-	racket run.rkt
+	racket supervisor.rkt config.json
 virtualenv:
 	virtualenv dev
-dev:
-	source dev/bin/activate
 setup:
 	pip install -r requirements.txt
 clean:

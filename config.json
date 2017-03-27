@@ -1,13 +1,44 @@
 {
-    "sleep_time": 30,
+    "sleep_time": 600,
     "sleep_count": 12,
     "hard_restarts": true,
     "init_sleep": 30,
-    "bots": [
-	{"python": "bots/dota-bot.py"},
-	{"python": "bots/dumb-bot.py"},
-	{"python": "bots/graph-bot.py"},
-	{"python": "bots/hacker-bot.py"},
-	{"python": "bots/janitor-bot.py"}
+    "reset_sleep": 30,
+    "programs": [
+        {
+            "name": "Dumb Bot",
+            "program": "python",
+            "args": [
+                "bots/dumb-bot.py"
+            ]
+        },
+        {
+            "name": "Dota Bot",
+            "program": "python",
+            "args": [
+                "bots/dota-bot.py"
+                ]
+        },
+        {
+            "name": "Graph Bot",
+            "program": "python",
+            "args": [
+                "bots/graph-bot.py"
+            ]
+        },
+        {
+            "name": "Hacker Bot",
+            "program": "python",
+            "args": [
+                "bots/hacker-bot.py"
+            ]
+        },
+        {
+            "name": "Janitor Bot",
+            "program": "python",
+            "args": [
+                "bots/janitor-bot.py"
+            ]
+        }
     ]
 }

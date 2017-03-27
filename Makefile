@@ -1,9 +1,10 @@
 run:
-	racket supervisor.rkt config.json
+	raco superv config.json
 virtualenv:
 	virtualenv dev
 setup:
 	pip install -r requirements.txt
+    raco pkg install superv
 clean:
 	rm -rf botdata/
 test:

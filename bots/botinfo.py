@@ -19,6 +19,7 @@ from ast import literal_eval
 # Bot local data information
 BOT_FOLDER = "botdata"
 KEY_FOLDER = "keys"
+SHR_FOLDER = "shared"
 
 # shortcut to unpack a syscall from getstatusoutput
 call = lambda p: getstatusoutput(p)[1]

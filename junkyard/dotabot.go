@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 )
 
@@ -12,6 +13,7 @@ import (
 var web_link = "https://discordapp.com/api/webhooks/296303788057427969/CUr6cezgCmIjYfVrbcxTIu2HnFKSorOUv15DKwnOoEvJcTFx8ZMNRR5RhQyNCqodHCHI"
 var dota_api = "https://api.opendota.com/api"
 var matchurl = "https://opendota.com/matches"
+var dota2log = "http://cdn.dota2.com/apps/dota2/images/nav/logo.png"
 
 // Create a User struct to represent calls made to the OpenDota API
 type User struct {
@@ -64,7 +66,14 @@ type Embed struct {
 	Description string   `json:"description"`
 	URL         string   `json:"url"`
 	Color       uint     `json:"color"`
+	Thumbnail   ThumbEmb `json:"footer"`
 	Fields      []EField `json:"fields"`
+}
+
+type ThumbEmb struct {
+	URL    string `json:"url"`
+	Width  uint   `json:"width"`
+	Height uint   `json:"height"`
 }
 
 type EField struct {
@@ -112,25 +121,41 @@ func (g GameInfo) GetData(uid uint64, heroes []Hero) Message {
 	})
 
 	fields = append(fields, EField{
-		"GPM / GPM",
+		"GPM / XPM",
 		fmt.Sprintf("%d / %d", p.GPM, p.XPM),
 		true,
 	})
 
-	// Bounty rune field
-	if p.Runes != (Rune{}) {
+	// Calculate the Ping statistic
+	var totalPings uint
+	if p.Pings != 0 {
+		for _, player := range g.Players {
+			if player.IsRadiant == p.IsRadiant {
+				totalPings += player.Pings
+			}
+		}
 		fields = append(fields, EField{
-			"Bounty Runes Collected",
-			fmt.Sprintf("%d", p.Runes.Bounty),
+			"Pings Used",
+			fmt.Sprintf("%d (%.2f%% of team)", p.Pings, (100.0 * float32(p.Pings) / float32(totalPings))),
 			true,
 		})
 	}
 
-	// Calculate the Ping statistic
-	if p.Pings != 0 {
+	// Bounty rune field
+	var totalBounties uint
+	if p.Runes != (Rune{}) {
+		for _, player := range g.Players {
+			if player.Runes != (Rune{}) {
+				totalBounties += player.Runes.Bounty
+			}
+		}
 		fields = append(fields, EField{
-			"Pings Used",
-			fmt.Sprintf("%d", p.Pings),
+			"Bounty Runes Collected",
+			fmt.Sprintf(
+				"%d (%.2f%% of all bounties)",
+				p.Runes.Bounty,
+				(100.0 * float32(p.Runes.Bounty) / float32(totalBounties)),
+			),
 			true,
 		})
 	}
@@ -158,7 +183,8 @@ func (g GameInfo) GetData(uid uint64, heroes []Hero) Message {
 				fmt.Sprintf("Results for Match %d", g.MatchID),
 				fmt.Sprintf(p.Nickname + " " + victory + " as " + hero.Name),
 				fmt.Sprintf("%s/%d", matchurl, g.MatchID),
-				200, // color
+				uint(math.Mod(float64(g.MatchID), 16777215.0)), // color
+				ThumbEmb{dota2log, 167, 33},
 				fields,
 			},
 		},
@@ -208,6 +234,7 @@ func post(msg Message) {
 	if err != nil {
 		panic("Can't construct JSON message")
 	}
+    fmt.Println(bytes.NewBuffer(jv))
 	_, err2 := http.Post(web_link, "application/json", bytes.NewBuffer(jv))
 	if err2 != nil {
 		panic("Failed to send WebHook message")

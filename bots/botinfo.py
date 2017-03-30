@@ -169,24 +169,34 @@ def setup_on_message(client, logger):
         binds = register_command()
         if key in binds:
             if rest.lower().startswith("help"):
-                return await client.send_message(msg.channel,
-                                                pre_text("Help for '{}':{}".format(
-                                                     key, binds[key].__doc__)))
+                return await client.send_message(
+                    msg.channel,
+                    pre_text(
+                        "Help for '{}':{}".format(key, binds[key].__doc__)
+                    )
+                )
             return await binds[key](*args)
         return
     return on_message
+
+def read_file(path):
+    """
+    Read a file and handle the I/O exceptions
+    """
+    try:
+        with open(path, 'r') as f:
+            return f.read().strip("\n").strip("\r").replace("\n", "")
+    except Exception:
+        raise IOError("File can't be read (doesn't exist)")
+    return False
+
 
 def read_key(bot_name):
     """
     Read a key file which contains bot tokens
     Return false if the key couldn't be read
     """
-    try:
-        with open(join(KEY_FOLDER, "{}.key".format(bot_name)), 'r') as f:
-            return f.read().strip("\n").strip("\r").replace("\n", "")
-    except Exception:
-        raise IOError("Can't read key")
-    return False
+    return read_file(join(KEY_FOLDER, "{}.key".format(bot_name)))
 
 def pre_text(string, lang=None):
     """

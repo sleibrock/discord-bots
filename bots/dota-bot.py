@@ -1,435 +1,123 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
-"""
-Dota bot
-
-This bot's goal is aimed at Dota-related activities
-"""
-
-from random import choice
-from botinfo import *
-from bs4 import BeautifulSoup as BS
-from requests import get as re_get
 from json import load as jload, dump as jdump
+from time import sleep
+from botinfo import *
+from requests import get, post
 from pathlib import Path
 
-# build a static list of heroes/items here
-# Instead of waiting on a net request, just write them all
-# Include whether a hero is RANGED, MELEE, or MIXED
-# This will determine rules for melee/ranged bonus items
-HEROES = [
-    {"name": "Abaddon",             "type": "melee"},
-    {"name": "Alchemist",           "type": "melee"},
-    {"name": "Ancient Apparition",  "type": "ranged"},
-    {"name": "Anti-Mage",           "type": "melee"},
-    {"name": "Arc Warden",          "type": "ranged"},
-    {"name": "Axe",                 "type": "melee"},
-    {"name": "Bane",                "type": "ranged"},
-    {"name": "Batrider",            "type": "ranged"},
-    {"name": "Beastmaster",         "type": "melee"},
-    {"name": "Bloodseeker",         "type": "melee"},
-    {"name": "Bounty Hunter",       "type": "melee"},
-    {"name": "Brewmaster",          "type": "melee"},
-    {"name": "Bristleback",         "type": "melee"},
-    {"name": "Broodmother",         "type": "melee"},
-    {"name": "Centaur Warrunner",   "type": "melee"},
-    {"name": "Chaos Knight",        "type": "melee"},
-    {"name": "Chen",                "type": "ranged"},
-    {"name": "Clinkz",              "type": "ranged"},
-    {"name": "Clockwerk",           "type": "melee"},
-    {"name": "Crystal Maiden",      "type": "melee"},
-    {"name": "Dark Seer",           "type": "melee"},
-    {"name": "Dazzle",              "type": "ranged"},
-    {"name": "Death Prophet",       "type": "ranged"},
-    {"name": "Disruptor",           "type": "ranged"},
-    {"name": "Doom",                "type": "melee"},
-    {"name": "Dragon Knight",       "type": "mixed"},
-    {"name": "Drow Ranger",         "type": "ranged"},
-    {"name": "Earth Spirit",        "type": "melee"},
-    {"name": "Earthshaker",         "type": "melee"},
-    {"name": "Elder Titan",         "type": "melee"},
-    {"name": "Ember Spirit",        "type": "melee"},
-    {"name": "Enchantress",         "type": "ranged"},
-    {"name": "Enigma",              "type": "ranged"},
-    {"name": "Faceless Void",       "type": "melee"},
-    {"name": "Gyrocopter",          "type": "ranged"},
-    {"name": "Huskar",              "type": "ranged"},
-    {"name": "Invoker",             "type": "ranged"},
-    {"name": "Io",                  "type": "ranged"},
-    {"name": "Jakiro",              "type": "ranged"},
-    {"name": "Juggernaut",          "type": "melee"},
-    {"name": "Keeper of the Light", "type": "ranged"},
-    {"name": "Kunkka",              "type": "melee"},
-    {"name": "Legion Commander",    "type": "melee"},
-    {"name": "Leshrac",             "type": "ranged"},
-    {"name": "Lich",                "type": "ranged"},
-    {"name": "Lifestealer",         "type": "melee"},
-    {"name": "Lina",                "type": "ranged"},
-    {"name": "Lion",                "type": "ranged"},
-    {"name": "Lone Druid",          "type": "mixed"},
-    {"name": "Luna",                "type": "ranged"},
-    {"name": "Lycan",               "type": "melee"},
-    {"name": "Magnus",              "type": "melee"},
-    {"name": "Medusa",              "type": "ranged"},
-    {"name": "Meepo",               "type": "melee"},
-    {"name": "Mirana",              "type": "ranged"},
-    {"name": "Monkey King",         "type": "melee"},
-    {"name": "Morphling",           "type": "ranged"},
-    {"name": "Naga Siren",          "type": "melee"},
-    {"name": "Nature's Prophet",    "type": "melee"},
-    {"name": "Necrophos",           "type": "ranged"},
-    {"name": "Nightstalker",        "type": "melee"},
-    {"name": "Nyx Assassin",        "type": "melee"},
-    {"name": "Ogre Magi",           "type": "melee"},
-    {"name": "Omniknight",          "type": "melee"},
-    {"name": "Oracle",              "type": "ranged"},
-    {"name": "Outworld Devourer",   "type": "ranged"},
-    {"name": "Phantom Assassin",    "type": "melee"},
-    {"name": "Phantom Lancer",      "type": "melee"},
-    {"name": "Phoenix",             "type": "ranged"},
-    {"name": "Puck",                "type": "ranged"},
-    {"name": "Pudge",               "type": "melee"},
-    {"name": "Pugna",               "type": "ranged"},
-    {"name": "Queen of Pain",       "type": "ranged"},
-    {"name": "Razor",               "type": "ranged"},
-    {"name": "Riki",                "type": "melee"},
-    {"name": "Rubick",              "type": "ranged"},
-    {"name": "Sand King",           "type": "melee"},
-    {"name": "Shadow Demon",        "type": "ranged"},
-    {"name": "Shadow Fiend",        "type": "ranged"},
-    {"name": "Shadow Shaman",       "type": "ranged"},
-    {"name": "Silencer",            "type": "ranged"},
-    {"name": "Skywrath Mage",       "type": "ranged"},
-    {"name": "Slardar",             "type": "melee"},
-    {"name": "Slark",               "type": "melee"},
-    {"name": "Sniper",              "type": "ranged"},
-    {"name": "Spectre",             "type": "melee"},
-    {"name": "Spirit Breaker",      "type": "melee"},
-    {"name": "Storm Spirit",        "type": "ranged"},
-    {"name": "Sven",                "type": "melee"},
-    {"name": "Techies",             "type": "ranged"},
-    {"name": "Templar Assassin",    "type": "ranged"},
-    {"name": "Terrorblade",         "type": "mixed"},
-    {"name": "Tidehunter",          "type": "melee"},
-    {"name": "Timbersaw",           "type": "melee"},
-    {"name": "Tinker",              "type": "ranged"},
-    {"name": "Tiny",                "type": "melee"},
-    {"name": "Treant Protector",    "type": "melee"},
-    {"name": "Troll Warlord",       "type": "mixed"},
-    {"name": "Tusk",                "type": "melee"},
-    {"name": "Underlord",           "type": "melee"},
-    {"name": "Undying",             "type": "melee"},
-    {"name": "Ursa",                "type": "melee"},
-    {"name": "Vengeful Spirit",     "type": "ranged"},
-    {"name": "Venomancer",          "type": "ranged"},
-    {"name": "Viper",               "type": "ranged"},
-    {"name": "Visage",              "type": "ranged"},
-    {"name": "Warlock",             "type": "ranged"},
-    {"name": "Weaver",              "type": "ranged"},
-    {"name": "Windranger",          "type": "ranged"},
-    {"name": "Winter Wyvern",       "type": "ranged"},
-    {"name": "Wraith King",         "type": "melee"},
-    {"name": "Zeus",                "type": "ranged"},
-]
+DELAY_TIMER = 10 # 60 * 30
+INBETWEEN_TIMER = 30
 
-# Boots to pick from
-# Guardian Greaves is ignored because that's more of a flex pickup
-# It won't even qualify for normal items just because of it's nature
-BOOTS = [
-    {"name": "Phase Boots", "price": 1240},
-    {"name": "Tranquil Boots", "price": 900},
-    {"name": "Power Treads", "price": 1350},
-    {"name": "Boots of Travel", "price": 2400},
-    {"name": "Arcane Boots", "price": 1300},
-    {"name": "Guardian Greaves", "price": 5250},
-]
+WEB_HOOK = "https://discordapp.com/api/webhooks/296303788057427969/CUr6cezgCmIjYfVrbcxTIu2HnFKSorOUv15DKwnOoEvJcTFx8ZMNRR5RhQyNCqodHCHI"
 
-# Optional tie-ins for certain types of characters
-MELEE_ONLY = [
-    {"name": "Echo Saber", "price": 2650},
-]
-
-RANGED_ONLY = [
-    {"name": "Dragon Lance", "price": 1900},
-]
-
-# Rapier won't be included as it can lead to many game losses
-# Each item has an associated cost so you can measure how much
-# gold is required to reach your target (and possibly re-roll
-# if the GPM is just an impossibility for your given character)
-ITEMS = [
-    {"name": "Daedelus",                  "price": 5520},
-    {"name": "Abyssal Blade",             "price": 6400},
-    {"name": "Monkey King Bar",           "price": 5400},
-    {"name": "Eye of Skadi",              "price": 5675},
-    {"name": "Bloodthorn",                "price": 7195},
-    {"name": "Radiance",                  "price": 5150},
-    {"name": "Manta Style",               "price": 4950},
-    {"name": "Battlefury",                "price": 4500},
-    {"name": "Silver Edge",               "price": 5100},
-    {"name": "Helm of the Dominator",     "price": 1800},
-    {"name": "Mask of Madness",           "price": 1900},
-    {"name": "Diffusal Blade",            "price": 3150},
-    {"name": "Sange and Yasha",           "price": 4100},
-    {"name": "Mjollnir",                  "price": 5700},
-    {"name": "Butterfly",                 "price": 5525},
-    {"name": "Blink Dagger",              "price": 2250},
-    {"name": "Moon Shard",                "price": 4000},
-    {"name": "Desolator",                 "price": 3500},
-    {"name": "Satanic",                   "price": 5800},
-    {"name": "Heaven's Halberd",          "price": 3500},
-    {"name": "Blaemail",                  "price": 2200},
-    {"name": "Crimson Guard",             "price": 3550},
-    {"name": "Assault Cuirass",           "price": 5250},
-    {"name": "Black King Bar",            "price": 3975},
-    {"name": "Shiva's Guard",             "price": 4700},
-    {"name": "Lotus Orb",                 "price": 4000},
-    {"name": "Linken's Sphere",           "price": 4800},
-    {"name": "Heart of Tarrasque",        "price": 5500},
-    {"name": "Ethereal Blade",            "price": 4700},
-    {"name": "Dagon",                     "price": 2720},
-    {"name": "Necronomicon",              "price": 2650},
-    {"name": "Rod of Atos",               "price": 3100},
-    {"name": "Eul's Scepter of Divinity", "price": 2750},
-    {"name": "Veil of Discord",           "price": 2240},
-    {"name": "Aghanim's Scepter",         "price": 4200},
-    {"name": "Bloodstone",                "price": 4900},
-    {"name": "Refresher Orb",             "price": 5200},
-    {"name": "Glimmer Cape",              "price": 1850},
-    {"name": "Aether Lens",               "price": 2350},
-    {"name": "Force Staff",               "price": 2250},
-    {"name": "Pipe of Insight",           "price": 3100},
-    {"name": "Solar Crest",               "price": 2625},
-    {"name": "Vladmir's Offering",        "price": 2275},
-]
-
-bot_name = "dota-bot"
-client   = discord.Client()
-logger   = create_logger(bot_name)
-bot_data = create_filegen(bot_name)
-
-# API endpoints go here
-OPENDOTA_URL = "https://opendota.com/matches"
 OPENDOTA_API = "https://api.opendota.com/api"
+OPENDOTA_URL = "https://opendota.com/matches"
 
-# Prefetch a list of heroes from OpenDota
-# Cache it to disk just to avoid making too many reqs
-hero_data_cached = False
-hero_dataf = Path(bot_data("heroes.json"))
+HERO_DATA_CACHED = False
+HERO_DATA_PATH   = Path("shared/heroes.json")
 
-# Check if the file exists in the system
-# Else load the JSON from a request
-if hero_dataf.is_file():
-    hero_data_cached = True
-    with open(hero_dataf, "r") as f:
-        hero_data = jload(f)
-else:
-    r = re_get(f"{OPENDOTA_API}/heroes")
-    if r.status_code != 200:
-        print(f"Error pre-fetching hero data (code: {r.status_code})")
-    hero_data_cached = False 
-    hero_data = r.json()
-    
-@register_command
-async def osfrog(msg, mobj):
-    """
-    Patch 7.02: help string was removed from Captain's Mode 
-    """
-    osfrogs = [
-        "Added Monkey King to the game",
-        "Reduced Lone Druid's respawn talent -50s to -40s",
-    ]
-    return await client.send_message(mobj.channel, choice(osfrogs))
+SHARED = Path("shared")
+logger = create_logger("dota-bot")
 
-@register_command
-async def challenge(msg, mobj):
+def get_payload(dota_id, match_id):
     """
-    The Challenge
-    Picks a random Dota 2 hero to play and gives you 3 items to work towards
-    Optional: supply a hero and get the 3 items to play (sd/ap/rd applicable)
-    Example: !challenge
-             -> Bloodseeker: Guardian Greaves, Abyssal Blade, Dagon 
+    Craft a webhook payload
     """
-    msg = []
-    hs = msg.strip().lower().capitalize()
-    if hs != "":
-        search = [h for h in HEROES if h["name"] == hs]
-        if not search:
-            return await client.send_message(mobj.channel, "Couldn't find hero")
-        hero = search[0]
+    jsonblob = get(f"{OPENDOTA_API}/matches/{match_id}").json()
+    print(jsonblob)
+    data = dict()
+    embs = []
+
+    radiant_win = jsonblob["radiant_win"]
+    radiant_score = jsonblob["radiant_score"]
+    dire_score = jsonblob["dire_score"]
+    game_mode = jsonblob["game_mode"]
+
+    player = None
+    for p in jsonblob["players"]:
+        if str(p["account_id"]) == dota_id:
+            logger("Found the player")
+            player = p
+    if player is None:
+        logger("Failed to find the player")
+        return False
+
+    # Score field
+    embs.append({
+        "name": "Score (KDA)",
+        "value": f"{player['kills']}/{player['deaths']}/{player['assists']}",
+        "inline": True
+    })
+
+    # craft the main embed
+    data["embeds"] = [{
+        "title": f"Results for Match #{match_id}",
+        "description": "something something player victory status",
+        "url": f"{OPENDOTA_URL}/{match_id}",
+        #"color": int(match_id % 0xffffff),
+        #"fields": embs,
+        #"footer": {
+        #    "text": "Provided by OpenDota API"
+        #}
+    }]
+    return data
+
+def fetch_last_match(path):
+    dota_id = read_file(path)
+    data = get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1").json()
+    if not data:
+        return False # no matches played
+
+    match_id = data[0]["match_id"]
+
+    # Check the match_id versus the one in the cache
+    # Check if a cache even exists
+    cache = Path(f"{path}.cache")
+    cache_v = 0
+    if cache.is_file():
+        with open(cache, 'r') as f:
+            try:
+                cache_v = int(f.read())
+            except Exception:
+                cache_v = 0
     else:
-        hero = choice(HEROES)
-        msg.append(f"Hero: {hero['name']}")
+        with open(cache, 'w') as f:
+            f.write(str(match_id))
 
-    item_pool = ITEMS
-    if hero["type"] == "mixed":
-        item_pool.extend(MELEE_ONLY)
-        item_pool.extend(RANGED_ONLY)
-    elif hero["type"] == "melee":
-        item_pool.extend(MELEE_ONLY)
-    else:
-        item_pool.extend(RANGED_ONLY)
-    shuffle(item_pool)
+    # Check if match_id is greater than cache_v
+    if match_id <= cache_v:
+        logger(f"{path}: Latest match not newer than cached match")
+        return False
 
-    # Start filling the pool with items
-    boots = choice(BOOTS)
-    picked_items = []
-    while len(picked_items) < 3:
-        picked_items.append(item_pool.pop(0))
-        shuffle(item_pool)
-
-    msg.append(f"Hero: {hero['name']}")
-    msg.append(f"Items: {', '.join([i['name'] for i in picked_items])}")
-    msg.append(f"Total cost: {sum([i['price'] for i in picked_items])}")
+    """
+    Test this blob
     
-    return await client.send_message(mobj.channel, "\n".join(msg))
-
-@register_command
-async def dota_id(msg, mobj):
+    {"embeds":[{"title":"Results for Match 3086034297","description":"Ste5e lost as Bristleback","url":"https://opendota.com/matches/3086034297","color":15803952,"footer":{"url":"http://cdn.dota2.com/apps/dota2/images/nav/logo.png","width":167,"height":33},"fields":[{"name":"K/D/A","value":"4/6/11","inline":true},{"name":"GPM / XPM","value":"418 / 645","inline":true},{"name":"Pings Used","value":"55 (49.11% of team)","inline":true},{"name":"Bounty Runes Collected","value":"6 (9.23% of all bounties)","inline":true},{"name":"Longest Chat","value":"'these 2 are fuckin kiddin me' -Ste5e","inline":true}]}]}
     """
-    Register's a user's Discord ID and associates it with a Dota ID
-    This is used to retrieve a user's last played match from OpenDota 
-    The string must be tested against OpenDota's API to see if it's valid
-    """
-    if len(msg) > 30:
-        return await client.send_message(mobj.channel, "Bro that's too long")
+    
+    print(data)
+    payload = get_payload(dota_id, match_id)
+    print(payload)
+    res = post(WEB_HOOK, payload)
+    print(res)
+    post(WEB_HOOK, {"embeds": [{"title":"Test","description": "test description", "url":"https://google.com/","color":200, "fields":[{"name":"test","value":"test message", "inline":True}]}]})
+    post(WEB_HOOK, {"content": "test"})
+    return
 
-    r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
-    if r.status_code != 200:
-        return await client.send_message(mobj.channel, "Invalid Dota ID")
+def main():
+    logger("Beginning Match Parsing...")
+    while True:
+        keys = [f for f in SHARED.iterdir() if str(f).endswith("dota")]
+        logger(f"Keys loaded: {len(keys)}")
+        for f in keys:
+            fetch_last_match(f)
+            sleep(INBETWEEN_TIMER)
+        sleep(DELAY_TIMER)
+    logger("Exiting")
 
-    fname = bot_data(f"{mobj.author.id}.txt")
-    print(fname)
-    with open(fname, 'w') as f:
-        f.write(msg.strip())
-
-    print("Returning")
-    return await client.send_message(mobj.channel, "Registered your Dota ID")
-
-@register_command
-async def lastmatch(msg, mobj):
-    """
-    Fetch a user's ID from the FS and yield the last played match
-    from the OpenDota API
-    The user must first associate a Dota ID with !dota_id to use this
-    """
-    fname = bot_data(f"{mobj.author.id}.txt") 
-    if not fname:
-        return await client.send_message(mobj.channel, "Register your ID first")
-    dota_id = None
-    with open(fname, 'r') as f:
-        dota_id = f.read().strip("\n")
-
-    r    = re_get(f"{OPENDOTA_API}/players/{dota_id}/matches?limit=1") 
-    if r.status_code != 200:
-        return await client.send_message(mobj.channel, "Failed to get matches")
-    data = r.json()
-
-    mid  = data[0]['match_id']
-    mr   = re_get(f"{OPENDOTA_API}/matches/{mid}")
-    if mr.status_code != 200:
-        return await client.send_message(mobj.channel, "Error retrieving data")
-
-    # Find the player object in the players property
-    mdata   = mr.json()
-    players = mdata["players"]
-    pfilter = [p for p in players if str(p["account_id"]) == dota_id]
-    if not pfilter:
-        return await client.send_message(mobj.channel, f"Couldn't find user (???)")
-    player  = pfilter[0]
-    victory = "won" if player["win"] == 1 else "lost"
-
-    # Start grabbing details
-    pname        = player["personaname"]
-    heroid       = player["hero_id"]
-    k            = player["kills"]
-    d            = player["deaths"]
-    a            = player["assists"]
-    kda          = player["kda"] 
-    gpm          = player["gold_per_min"]
-    damage_dealt = player["hero_damage"]
-    team         = player["isRadiant"] # t if Rad, f if Dire
-
-    hero_filter = [h for h in hero_data if h["id"] == heroid]
-    if not hero_filter:
-        return await client.send_message(mobj.channel, f"Can't find hero {heroid}")
-    hero_name = hero_filter[0]["localized_name"]
-
-    # Grab Ping details of entire team
-    ppings      = player["pings"]
-    total_pings = sum([p["pings"] for p in players if p["isRadiant"] == team])
-    pingpc      = round((float(ppings) / total_pings) * 100.0, 2)
-
-    # Grab bounty runes picked up (bounty is ID# 5)
-    bounties = player["runes"].get("5", 0)
-    all_bounties = sum([p["runes"].get("5", 0) for p in players])
-    bcp = round((float(bounties) / all_bounties) * 100.0, 2)
-
-    # Grab messages sent in all chat
-    allchat = mdata["chat"]
-    allchat_msgs = sorted(
-        [m for m in allchat if m["unit"] == pname],
-        key=lambda d: len(d["key"]),
-        reverse=True
-    )
-    acp = round((float(len(allchat_msgs)) / len(allchat)) * 100.0, 2)
-
-    allchat_longest = ""
-    if allchat_msgs:
-        allchat_longest = allchat_msgs[0]['key']
-
-    # Get team's kills and calculate kill participation
-    ts = mdata["radiant_score"] if team else mdata["dire_score"]
-    kp = round(float(k+a) / ts, 2)
-
-    # Create an embed inside of Discord
-    emb = Embed(
-        title=f"Match {mid}",
-        url=f"{OPENDOTA_URL}/{mid}",
-        description=f"{pname} {victory} as **{hero_name}**",
-        color=0x993925
-    )
-
-    # Set the embed image in the corner
-    # emb.set_thumbnail(url="https://lol.com/lol.jpg")
-
-    emb.add_field(name="Score", value=f"{k}/{d}/{a} (KDA:{kda}, GPM:{gpm})")
-
-    if bounties:
-        emb.add_field(name="Bounty Runes Collected",
-                      value=f"{bounties} ({bcp}% of all bounties)")
-
-    if ppings:
-        emb.add_field(name="Ping Stats",
-                      value=f"{ppings} ({pingpc}% of team)")
-
-    if allchat_msgs:
-        emb.add_field(name="Allchat Stats",
-                      value=f"{len(allchat_msgs)} ({acp}% of allchat)")
-        emb.add_field(name="Longest Quote",
-                      value=f"*'{allchat_longest}'* -{pname}")
-
-    emb.set_footer(text=f"Provided by OpenDota API")
-
-    return await client.send_message(mobj.channel, embed=emb)
-
-@register_command
-def last100(msg, mobj):
-    """
-    Report winrate stats in the last 100 matches
-    """
-    pass
-
-setup_all_events(client, bot_name, logger)
-
-# Write the bot data to cache if it isn't there
-# Has to be done here to await creating the bot data folder
-if not hero_data_cached:
-   with open(hero_dataf, "w") as f:
-       jdump(hero_data, f)
- 
 if __name__ == "__main__":
-    run_the_bot(client, bot_name, logger)
-
+    main()
+    pass
 # end

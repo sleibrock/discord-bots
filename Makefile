@@ -4,7 +4,7 @@ virtualenv:
 	virtualenv dev
 setup:
 	pip install -r requirements.txt
-    raco pkg install superv
+	raco pkg install superv
 clean:
 	rm -rf botdata/
 test:

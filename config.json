@@ -13,13 +13,6 @@
             ]
         },
         {
-            "name": "Dota Bot",
-            "program": "python",
-            "args": [
-                "bots/dota-bot.py"
-                ]
-        },
-        {
             "name": "Graph Bot",
             "program": "python",
             "args": [

@@ -8,7 +8,6 @@ from time import sleep
 
 import discord
 from discord import Embed
-from requests import get as re_get, post as re_post
 
 class Bot(object):
     """
@@ -20,6 +19,7 @@ class Bot(object):
     BOT_FOLDER = "botdata"
     KEY_FOLDER = "keys"
     SHARED = "shared"
+    LOGSTR = "[\033[38;5;{3}m{0:<12}\033[0m @ {1}] {2}"
 
     # Static methods will come first
     @staticmethod
@@ -37,7 +37,7 @@ class Bot(object):
         """
         color = 16 + (hash(bot_name) % 240)
         def logger(msg):
-            print(LOGSTR.format(bot_name, strftime("%H:%M%S", localtime()), msg, color))
+            print(Bot.LOGSTR.format(bot_name, strftime("%H:%M%S", localtime()), msg, color))
             return True
         return logger
 
@@ -47,12 +47,12 @@ class Bot(object):
         Create a function to generate file Paths for us
         If no filename was given, yield the path to the folder instead
         """""
-        _make_folder(Path(BOT_FOLDER))
-        _make_folder(Path(BOT_FOLDER, bot_name))
+        Bot._make_folder(Path(Bot.BOT_FOLDER))
+        Bot._make_folder(Path(Bot.BOT_FOLDER, bot_name))
         def bot_file(filename=None):
             if filename is None or filename == "":
-                return Path(BOT_FOLDER, bot_name)
-            return Path(BOT_FOLDER, bot_name, filename)
+                return Path(Bot.BOT_FOLDER, bot_name)
+            return Path(Bot.BOT_FOLDER, bot_name, filename)
         return bot_file
 
     @staticmethod
@@ -76,13 +76,13 @@ class Bot(object):
     # Instance methods go below __init__()
     def __init__(self, name):
         self.name = name
-        self.logger = _create_logger(self.name)
+        self.logger = self._create_logger(self.name)
 
     def read_key(self):
         """
         Read a bot's keyfile to get it's token/webhook link
         """
-        return Bot._read_file(Path(KEY_FOLDER, f"{self.name}.key"))
+        return Bot._read_file(Path(self.KEY_FOLDER, f"{self.name}.key")).strip("\n")
 
 
 class ChatBot(Bot):
@@ -200,9 +200,9 @@ class WebHookBot(Bot):
     def main(self):
         """
         Override this in your webhook definition
+        The main() function must take no arguments
         """
         self.logger(f"I'm a WebHook bot!")
-        return re_post(self.endpoint, headers={"content-type": "application/json"}, json={"contents": "I'm a webhook bot!"})
 
     def run(self):
         """
@@ -212,7 +212,7 @@ class WebHookBot(Bot):
         try:
             while True:
                 self.main()
-                sleep(SLEEP_TIME)
+                sleep(self.SLEEP_TIME)
             return
         except Exception as e:
             self.logger(f"Exception caught: {e}")

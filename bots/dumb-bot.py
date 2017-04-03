@@ -25,6 +25,7 @@ https://github.com/sleibrock/discord-bots/blob/master/docs/bot-command-guide.md
 bot_name = "dumb-bot"
 client = discord.Client()
 logger = create_logger(bot_name)
+shared_data = create_filegen("shared")
 
 # Twitch info here
 TWITCH = "https://api.twitch.tv/kraken"
@@ -109,6 +110,29 @@ async def clips(msg, mobj):
            -> <link to random popular clip>
     """
     pass
+
+@register_command
+async def dota_id(msg, mobj):
+    """
+    Registers a user's Discord ID with a Dota 2 player ID
+    This will be used by the automated Dota 2 match parser service
+    The string given is tested against OpenDota's API to see if it's valid
+    """
+    if len(msg) > 30:
+        return await client.send_message(mobj.channel, "Bro that's too long")
+
+    r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
+    if r.status_code != 200:
+        return await client.send_message(mobj.channel, "Invalid Dota 2 ID")
+
+    fname = shared_data(f"{mobj.author.id}.dota")
+    with open(fname, 'w') as f:
+        f.write(msg.strip())
+
+    return await client.send_message(
+        mobj.channel,
+        "Registered Player ID {msg.strip()}"
+    )
 
 # Last step - register events then run
 setup_all_events(client, bot_name, logger)

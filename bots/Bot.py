@@ -9,6 +9,21 @@ from time import sleep
 import discord
 from discord import Embed
 
+"""
+The new and improved class-based Bot library
+
+Bots are broken down into two categories: Chat and Webhook
+
+Chat: a bot that receives and can send messages through guilds
+Webhook: a bot that can only send messages to specified channels
+
+ChatBots require an authorized Discord application token, while a 
+WebHookBot only requires an endpoint acquired from setting up a 
+Webhook on a specific Discord Guild channel. Both can be useful in 
+different scenarios (Webhook is better at automated tasks, while 
+Chat is better at replying to user requests (and also voice)).
+""" 
+
 class Bot(object):
     """
     The main Bot class for all bots to inherit from
@@ -94,11 +109,28 @@ class ChatBot(Bot):
     token associated with it. The keys are read from files (no trailing newlines)
     inside of a local "keys" folder. The "keys" folder is at the root of the 
     project, not inside the Bot Data folder
+    
+    NOTE: when instancing, don't create more than one instance at a time
     """
     PREFIX = "!"
+    ACTIONS = dict()
 
+    @staticmethod
+    def action(function):
+        """
+        Decorator to register functions into the action map
+        This is bound to static as we can't use an instance object's method
+        as a decorator (could be a classmethod but who cares)
+        """
+        if callable(function):
+            if function.__name__ not in ChatBot.ACTIONS:
+                ChatBot.ACTIONS[f"{ChatBot.PREFIX}{function.__name__}"] = function
+                return True
+        return function
+
+    # Instance methods below
     def __init__(self, name):
-        super(ChatBot, self).__init__(self, name)
+        super(ChatBot, self).__init__(name)
         self.actions = dict()
         self.client = discord.Client()
         self.token = self.read_key()
@@ -109,16 +141,6 @@ class ChatBot(Bot):
         that will let you add the bot to one of your current servers
         """
         pass
-
-    def action(self, function):
-        """
-        Decorator to register functions into the action map
-        """
-        if callable(function):
-            if function.__name__ not in self.actions:
-                self.actions[f"{PREFIX}{function.__name}"] = function
-                return True
-        return function
 
     # Override-able events for your Discord bots
     def event_ready(self):
@@ -136,16 +158,16 @@ class ChatBot(Bot):
         async def on_message(msg):
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
-            if key in self.actions:
+            if key in self.ACTIONS:
                 if len(args) >= 1:
                     if args[0].lower() == "help":
                         return await self.client.send_message(
                             msg.channel,
                             self.pre_text(
-                                f"Help for '{key}':{self.actions[key].__doc__}"
+                                f"Help for '{key}':{self.ACTIONS[key].__doc__}"
                             )
                         )
-                return await self.actions[key](args, msg)
+                return await self.ACTIONS[key](self, args, msg)
         return on_message
 
     def setup_events(self):
@@ -174,7 +196,7 @@ class ChatBot(Bot):
             print("Keyboard Interrupt signal")
         finally:
             print(f"{self.name} quitting")
-            loop.run_until_complete(client.logout())
+            loop.run_until_complete(self.client.logout())
             loop.stop()
             loop.close()
             quit()

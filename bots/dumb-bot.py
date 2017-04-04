@@ -1,143 +1,137 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
-"""
-Dumb-bot
-
-The dumbest bot of them all
-Mostly a collection of scraping utilities and 
-otherwise non-related functions
-"""
-
-from botinfo import *
-from bs4 import BeautifulSoup as BS
-from requests import get as re_get
 from random import randint, choice
+from Bot import ChatBot
+from requests import get
+from bs4 import BeautifulSoup as BS
 
-help_msg = """
-The Discord Bot Project
-https://github.com/sleibrock/discord-bots
+class DumbBot(ChatBot):
+    def __init__(self, name):
+        super(DumbBot, self).__init__(name)
+        self.filegen = self._create_filegen("shared")
 
-Command reference
-https://github.com/sleibrock/discord-bots/blob/master/docs/bot-command-guide.md
-"""
+    @ChatBot.action
+    async def howto(self, args, mobj):
+        """
+        Return a link to a command reference sheet
+        If you came here from !howto help, you're out of luck
+        """
+        return await self.client.send_message(mobj.channel, "https://google.com/")
+        
+    @ChatBot.action
+    async def dota_id(self, args, mobj):
+        """
+        Register a Dota ID
+        Example: !yt 40281889
+        """
+        p = self.filegen(f"{mobj.author.id}.dota")
+        if not args:
+            if p.is_file():
+                with open(p, 'r') as f:
+                    return self.client.send_message(mobj.channel, f"Current ID: {f.read()}")
+                pass
+            else:
+                return self.client.send_message(mobj.channel, "No Dota ID supplied")
 
-bot_name = "dumb-bot"
-client = discord.Client()
-logger = create_logger(bot_name)
-shared_data = create_filegen("shared")
+        # Get the first argument in the list and check if it's valid
+        u = args[0].strip().strip("\n")
+        if len(u) > 30 or not u.isnumeric():
+            return self.client.send_message(mobj.channel, "Invalid ID given")
 
-# Twitch info here
-TWITCH = "https://api.twitch.tv/kraken"
-TKEY   = read_key("twitch")
-STRAMS = f"{TWITCH}/streams/?game={'{}'}&client_id={TKEY}&limit=1"
+        # Write to file
+        with open(p, 'w') as f:
+            f.write(u)
 
-@register_command
-async def howto(msg, mobj):
-    """
-    Return a help message
-    If you came here from !howto help; there's nothing else, sorry
-    """
-    return await client.send_message(mobj.channel, pre_text(help_msg))
+        return await self.client.send_message(mobj.channel, f"Registered ID {u}")
 
-@register_command
-async def rtd(msg, mobj):
-    """
-    Roll a d<N> di[c]e <X> number of times
-    Example: !rtd 2d10 - rolls two d10 dice
-    """
-    if msg == "":
-        return await client.send_message(mobj.channel, "You didn't say anything!")
-    try:
-        times, sides = list(map(int, msg.lower().split("d")))
-        res = [randint(1, sides) for x in range(times)]
-        return await client.send_message(mobj.channel, ", ".join(map(str, res)))
-    except Exception as ex:
-        logger(f"Error: {ex}")
-    return await client.send_message(mobj.channel, "Error: bad input args")
+    @ChatBot.action
+    async def coin(self, args, mobj):
+        """
+        Do a coin flip
+        Example: !coin
+        """
+        return await self.client.send_message(mobj.channel, choice(["Heads", "Tails"]))
 
-@register_command
-async def yt(msg, mobj):
-    """
-    Do a youtube search and yield the first result
-    Example: !yt how do I take a screenshot
-    """
-    try:
-        if msg == "":
-            return await client.send_message(mobj.channel, "You didn't search for anything!")
-        msg.replace(" ", "+")
-        url = "https://www.youtube.com/results?search_query={}".format(msg)
-        bs = BS(re_get(url).text, "html.parser")
+    @ChatBot.action
+    async def rtd(self, args, mobj):
+        """
+        Roll the dice - !rtd <Num of dice> <Num of sides>
+        Example: !rtd 10 3
+        """
+        if len(args) != 2:
+            return await self.client.send_message(mobj.channel, "Invalid arg amount")
+
+        if not all((x.isnumeric() for x in args)):
+            return await self.client.send_message(mobj.channel, "Non-numeric args given")
+
+        nums = [int(x) for x in args]
+
+        if not all([n for n in nums if 0 < n < 101]):
+            return await self.client.send_message(mobj.channel, "Invalid ranges given")
+
+        numd, sides = nums[:2]
+        results = [str(randint(1, sides)) for i in range(numd)]
+        
+        self.logger("Sending message")
+        return await self.client.send_message(mobj.channel, ", ".join(results))
+
+    @ChatBot.action
+    async def yt(self, args, mobj):
+        """
+        Get the first Youtube search result video
+        Example: !yt how do I take a screenshot
+        """
+        if not args:
+            return await self.client.send_message(mobj.channel, "Empty search terms")
+
+        url = f"https://www.youtube.com/results?search_query={' '.join(args)}"
+        resp = get(url)
+        if resp.status_code != 200:
+            return await self.client.send_message(mobj.channel, "Failed to retrieve search")
+
+        # Build a BS parser and find all Youtube links on the page
+        bs = BS(resp.text, "html.parser")
         items = bs.find("div", id="results").find_all("div", class_="yt-lockup-content")
         if not items:
-            return await client.send_message(mobj.channel, "Couldn't find any results")
+            return await self.client.send_message(mobj.channel, "No videos found")
 
-        # Search for a proper youtube url, has to start with /watch
-        # TODO: rewrite this with a list comp/filter
-        i, found = 0, False
-        while not found and i < 20:
-            href = items[i].find("a", class_="yt-uix-sessionlink")["href"]
-            if href.startswith("/watch"):
-                found = True
-            i += 1
-        if not found:
-            return await client.send_message(mobj.channel, "Couldn't find a link")
-        return await client.send_message(mobj.channel, f"https://youtube.com{href}")
-    except Exception as ex:
-        logger("Fail: {}".format(ex))
-    return await client.send_message(mobj.channel, "Failed to request the search")
+        # Construct an easy list of URLs
+        hrefs = [u for u in [i.find("a", class_="yt-uix-sessionlink")["href"] for i in items]
+                 if u.startswith("/watch")]
 
-@register_command
-async def streams(msg, mobj):
-    pass
+        # Check if we have any at all
+        if not hrefs:
+            return await self.client.send_message(mobj.channel, "No URLs found (? wat)")
 
-@register_command
-async def clipreg(msg, mobj):
-    """
-    Register a Twitch.tv username into the Clips registry
-    Used to bookmark names to Twitch accounts for ez access
-    Must test the urls given to make sure it's a real Twitch account
-    Example: !clipreg bulldog admiralbulldog
-    """
-    pass
+        # Finish by sending the URL out
+        return await self.client.send_message(mobj.channel, f"https://www.youtube.com{hrefs[0]}")
 
-@register_command
-async def clips(msg, mobj):
-    """
-    Fetch a clip from a certain registered bookmark
-    If no bookmark given (but entries exist), get a random clip
-    Example: !clips summit1g
-           -> <link to random popular clip>
-    """
-    pass
+    @ChatBot.action
+    async def spam(self, args, mobj):
+        """
+        Spam a channel with dumb things
+        Example: !spam :ok_hand:
+        """
+        if not args or len(args) > 10:
+            return await self.client.send_message(mobj.channel, "Invalid spam input")
 
-@register_command
-async def dota_id(msg, mobj):
-    """
-    Registers a user's Discord ID with a Dota 2 player ID
-    This will be used by the automated Dota 2 match parser service
-    The string given is tested against OpenDota's API to see if it's valid
-    """
-    if len(msg) > 30:
-        return await client.send_message(mobj.channel, "Bro that's too long")
+        y = args * randint(5, 20)
+        return await self.client.send_message(mobj.channel, f"{' '.join(y)}")
 
-    r = re_get(f"{OPENDOTA_API}/players/{msg.strip()}")
-    if r.status_code != 200:
-        return await client.send_message(mobj.channel, "Invalid Dota 2 ID")
+    @ChatBot.action
+    async def test(self, args, mobj):
+        """
+        THIS
+        DOES
+        NOTHING
+        """
+        self.logger(f"args: {args}")
+        return await self.client.send_message(mobj.channel, "Hi")
 
-    fname = shared_data(f"{mobj.author.id}.dota")
-    with open(fname, 'w') as f:
-        f.write(msg.strip())
-
-    return await client.send_message(
-        mobj.channel,
-        "Registered Player ID {msg.strip()}"
-    )
-
-# Last step - register events then run
-setup_all_events(client, bot_name, logger)
 if __name__ == "__main__":
-    run_the_bot(client, bot_name, logger)
+    d = DumbBot("dumb-bot")
+    d.run()
+    pass
 
 # end
-

@@ -12,26 +12,19 @@
                 "bots/dumb-bot.py"
             ]
         },
+	{
+	    "name": "Dota Bot",
+	    "program": "python",
+	    "args": [
+		"bots/dota-bot.py"
+	    ]
+	},
         {
-            "name": "Graph Bot",
-            "program": "python",
-            "args": [
-                "bots/graph-bot.py"
-            ]
-        },
-        {
-            "name": "Hacker Bot",
-            "program": "python",
-            "args": [
-                "bots/hacker-bot.py"
-            ]
-        },
-        {
-            "name": "Janitor Bot",
-            "program": "python",
-            "args": [
-                "bots/janitor-bot.py"
-            ]
+	    "name": "Instagram Bot",
+	    "program": "python",
+	    "args": [
+		"bots/gram-bot.py"
+	    ]
         }
     ]
 }

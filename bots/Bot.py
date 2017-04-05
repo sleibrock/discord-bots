@@ -115,6 +115,10 @@ class ChatBot(Bot):
     PREFIX = "!"
     ACTIONS = dict()
 
+    # Bad words to prevent malicious searches from a host device
+    BADWORDS = ["fuck", "cock", "child", "kiddy", "porn", "pron", "pr0n",
+                "masturbate", "bate", "shit", "piss", "anal", "cum", "wank"]
+
     @staticmethod
     def action(function):
         """
@@ -135,12 +139,42 @@ class ChatBot(Bot):
         self.client = discord.Client()
         self.token = self.read_key()
 
+    async def message(self, channel, string):
+        """
+        Shorthand version of client.send_message
+        So that we don't have to arbitrarily type 
+        'self.client.send_message' all the time
+        """""
+        return await self.client.send_message(channel, string)
+
     def display_no_servers(self):
         """
         If the bot isn't connected to any servers, show a link
         that will let you add the bot to one of your current servers
         """
-        pass
+        if not self.client.servers:
+            self.logger(f"Join link: {discord.utils.oauth_url(self.client.user.id)}")
+        return
+
+    def get_last_message(self, chan, uid=None):
+        """
+        Search the given channel for the second-to-last message
+        aka: the message before the command was given to the bot
+        """
+        if len(self.client.messages) == 0:
+            raise Exception("Wat")
+        if len(client.messages) == 1:
+            return None
+        c_uid = lambda u, v: True
+        if uid is not None:
+            c_uid = lambda u, v: u == v
+        res = [msg for msg in self.client.messages
+               if msg.channel == chan
+               and msg.author.id != self.client.user.id
+               and c_uid(uid, msg.author.id)]
+        if len(res) <= 1:
+            return None
+        return res[-2]
 
     # Override-able events for your Discord bots
     def event_ready(self):

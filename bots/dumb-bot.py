@@ -7,6 +7,8 @@ from requests import get
 from bs4 import BeautifulSoup as BS
 
 class DumbBot(ChatBot):
+    GRAMLIST = "list.instagram"
+    
     def __init__(self, name):
         super(DumbBot, self).__init__(name)
         self.filegen = self._create_filegen("shared")
@@ -37,13 +39,29 @@ class DumbBot(ChatBot):
         # Get the first argument in the list and check if it's valid
         u = args[0].strip().strip("\n")
         if len(u) > 30 or not u.isnumeric():
-            return self.client.send_message(mobj.channel, "Invalid ID given")
+            return await self.client.send_message(mobj.channel, "Invalid ID given")
 
         # Write to file
         with open(p, 'w') as f:
             f.write(u)
 
         return await self.client.send_message(mobj.channel, f"Registered ID {u}")
+
+    @ChatBot.action
+    async def gram(self, args, mobj):
+        """
+        Append an Instagram ID to the main IID list
+        Example: !gram user_name1 user_name2 ...
+        """
+        repository = self.filegen(self.GRAMLIST)
+        self.logger("HELP ME")
+        if not repository.is_file():
+            self.logger("HELP ME")
+            repository.write_text("\n".join(args))
+            return await self.message(mobj.channel, f"Wrote {len(args)} to the list")
+        users = repository.read_text().split("\n").extend(args)
+        repository.write_text("\n".join(users))
+        return await self.message(mobj.channel, f"Wrote {len(args)} in the list ({len(users)} total)")
 
     @ChatBot.action
     async def coin(self, args, mobj):

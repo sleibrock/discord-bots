@@ -46,11 +46,9 @@ class Dotabot(WebHookBot):
         differs from the cache
         If not newer, return (None * None)
         """
-        dota_id = None
         if not player_path.is_file():
             raise IOError("Invalid Path() given for get_last_match()")
-        with open(player_path, 'r') as f:
-            dota_id = f.read().strip("\n")
+        dota_id = player_path.read_text().strip("\n") 
 
         resp = get(f"{self.OPENDOTA_API}/players/{dota_id}/matches?limit=1")
         if resp.status_code != 200:
@@ -68,14 +66,12 @@ class Dotabot(WebHookBot):
         cache = Path(f"{player_path}.cache")
         cache_v = 0
         if cache.is_file():
-            with open(cache, 'r') as f:
-                    cache_v = int(f.read())
+            cache_v = int(cache.read_text())
 
         # If the cache value is different from the new match iD,
         # Write to the cache file and return the (Match * ID) pair
         if cache_v != match_id:
-            with open(cache, 'w') as f:
-                f.write(str(match_id))
+            cache.write_text(str(match_id))
             return (match_id, dota_id)
         return (None, None)
                 
@@ -113,8 +109,15 @@ class Dotabot(WebHookBot):
                 
         # Player variable declarations for use later
         player_team = player["isRadiant"]
-        pname = player["personaname"] 
-        hero_name = "LOL"
+        pname = player["personaname"]
+        hero_id = player["hero_id"]
+
+        # Hero searching
+        hero_name = "Jebaited"
+        for hero in self.heroes:
+            if hero["id"] == hero_id:
+                hero_name = hero["localized_name"]
+                break
         
         # Score of game
         embs.append({
@@ -148,13 +151,14 @@ class Dotabot(WebHookBot):
         # If this stuff isn't immediately available, it shouldn't be added to the Embed
         # ping details
         if 'pings' in player:
-            total_pings = sum((p["pings"] for p in jsonblob["players"] if p["isRadiant"] == player_team))
+            total_pings = sum([p.get('pings', 0) for p in jsonblob["players"] if p["isRadiant"] == player_team])
             pingpc = round((float(player["pings"]) / total_pings) * 100.0, 2)
             embs.append({
                 "name": "Total Pings",
                 "value": f"{player['pings']} ({pingpc}% of team)",
                 "inline": True
             })
+            print("e")
 
         # rune details
         if 'runes' in player:
@@ -191,7 +195,7 @@ class Dotabot(WebHookBot):
         for keypath in files:
             last_match, dota_id = self.get_last_match(keypath)
             if last_match is not None:
-                print("Posting match")
+                self.logger("Posting match")
                 payload = self.get_payload(last_match, dota_id)
                 if not payload: 
                     self.logger("Failed to craft a payload")

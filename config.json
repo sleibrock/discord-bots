@@ -18,13 +18,6 @@
 	    "args": [
 		"bots/dota-bot.py"
 	    ]
-	},
-        {
-	    "name": "Instagram Bot",
-	    "program": "python",
-	    "args": [
-		"bots/gram-bot.py"
-	    ]
-        }
+	}
     ]
 }

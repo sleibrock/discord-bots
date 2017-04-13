@@ -271,6 +271,7 @@ class WebHookBot(Bot):
                 sleep(self.SLEEP_TIME)
             return
         except Exception as e:
+            print(e)
             self.logger(f"Exception caught: {e}")
         except SystemExit:
             self.logger("Sys Interrupt")

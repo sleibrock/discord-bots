@@ -19,10 +19,10 @@ class DumbBot(ChatBot):
         Return a link to a command reference sheet
         If you came here from !howto help, you're out of luck
         """
-        return await self.client.send_message(mobj.channel, "https://google.com/")
+        return await self.message(mobj.channel, "https://google.com/")
         
     @ChatBot.action
-    async def dota_id(self, args, mobj):
+    async def dota(self, args, mobj):
         """
         Register a Dota ID
         Example: !yt 40281889
@@ -31,37 +31,20 @@ class DumbBot(ChatBot):
         if not args:
             if p.is_file():
                 with open(p, 'r') as f:
-                    return self.client.send_message(mobj.channel, f"Current ID: {f.read()}")
+                    return self.message(mobj.channel, f"Current ID: {f.read()}")
                 pass
             else:
-                return self.client.send_message(mobj.channel, "No Dota ID supplied")
+                return self.message(mobj.channel, "No Dota ID supplied")
 
         # Get the first argument in the list and check if it's valid
         u = args[0].strip().strip("\n")
         if len(u) > 30 or not u.isnumeric():
-            return await self.client.send_message(mobj.channel, "Invalid ID given")
+            return await self.message(mobj.channel, "Invalid ID given")
 
         # Write to file
-        with open(p, 'w') as f:
-            f.write(u)
+        p.write_text(u)
 
-        return await self.client.send_message(mobj.channel, f"Registered ID {u}")
-
-    @ChatBot.action
-    async def gram(self, args, mobj):
-        """
-        Append an Instagram ID to the main IID list
-        Example: !gram user_name1 user_name2 ...
-        """
-        repository = self.filegen(self.GRAMLIST)
-        self.logger("HELP ME")
-        if not repository.is_file():
-            self.logger("HELP ME")
-            repository.write_text("\n".join(args))
-            return await self.message(mobj.channel, f"Wrote {len(args)} to the list")
-        users = repository.read_text().split("\n").extend(args)
-        repository.write_text("\n".join(users))
-        return await self.message(mobj.channel, f"Wrote {len(args)} in the list ({len(users)} total)")
+        return await self.message(mobj.channel, f"Registered ID {u}")
 
     @ChatBot.action
     async def coin(self, args, mobj):
@@ -69,7 +52,7 @@ class DumbBot(ChatBot):
         Do a coin flip
         Example: !coin
         """
-        return await self.client.send_message(mobj.channel, choice(["Heads", "Tails"]))
+        return await self.message(mobj.channel, choice(["Heads", "Tails"]))
 
     @ChatBot.action
     async def rtd(self, args, mobj):
@@ -78,41 +61,42 @@ class DumbBot(ChatBot):
         Example: !rtd 10 3
         """
         if len(args) != 2:
-            return await self.client.send_message(mobj.channel, "Invalid arg amount")
+            return await self.message(mobj.channel, "Invalid arg amount")
 
         if not all((x.isnumeric() for x in args)):
-            return await self.client.send_message(mobj.channel, "Non-numeric args given")
+            return await self.message(mobj.channel, "Non-numeric args given")
 
         nums = [int(x) for x in args]
 
         if not all([n for n in nums if 0 < n < 101]):
-            return await self.client.send_message(mobj.channel, "Invalid ranges given")
+            return await self.message(mobj.channel, "Invalid ranges given")
 
         numd, sides = nums[:2]
         results = [str(randint(1, sides)) for i in range(numd)]
         
         self.logger("Sending message")
-        return await self.client.send_message(mobj.channel, ", ".join(results))
+        return await self.message(mobj.channel, ", ".join(results))
 
     @ChatBot.action
     async def yt(self, args, mobj):
         """
         Get the first Youtube search result video
         Example: !yt how do I take a screenshot
+        TODO: replace BS with basic regex and requests with aiohttp
         """
         if not args:
-            return await self.client.send_message(mobj.channel, "Empty search terms")
+            return await self.message(mobj.channel, "Empty search terms")
 
         url = f"https://www.youtube.com/results?search_query={' '.join(args)}"
         resp = get(url)
         if resp.status_code != 200:
-            return await self.client.send_message(mobj.channel, "Failed to retrieve search")
+            return await self.message(mobj.channel, "Failed to retrieve search")
 
         # Build a BS parser and find all Youtube links on the page
         bs = BS(resp.text, "html.parser")
         items = bs.find("div", id="results").find_all("div", class_="yt-lockup-content")
         if not items:
-            return await self.client.send_message(mobj.channel, "No videos found")
+            return await self.message(mobj.channel, "No videos found")
 
         # Construct an easy list of URLs
         hrefs = [u for u in [i.find("a", class_="yt-uix-sessionlink")["href"] for i in items]
@@ -120,10 +104,10 @@ class DumbBot(ChatBot):
 
         # Check if we have any at all
         if not hrefs:
-            return await self.client.send_message(mobj.channel, "No URLs found (? wat)")
+            return await self.message(mobj.channel, "No URLs found (? wat)")
 
         # Finish by sending the URL out
-        return await self.client.send_message(mobj.channel, f"https://www.youtube.com{hrefs[0]}")
+        return await self.message(mobj.channel, f"https://www.youtube.com{hrefs[0]}")
 
     @ChatBot.action
     async def spam(self, args, mobj):
@@ -132,10 +116,10 @@ class DumbBot(ChatBot):
         Example: !spam :ok_hand:
         """
         if not args or len(args) > 10:
-            return await self.client.send_message(mobj.channel, "Invalid spam input")
+            return await self.message(mobj.channel, "Invalid spam input")
 
         y = args * randint(5, 20)
-        return await self.client.send_message(mobj.channel, f"{' '.join(y)}")
+        return await self.message(mobj.channel, f"{' '.join(y)}")
 
     @ChatBot.action
     async def test(self, args, mobj):
@@ -145,7 +129,7 @@ class DumbBot(ChatBot):
         NOTHING
         """
         self.logger(f"args: {args}")
-        return await self.client.send_message(mobj.channel, "Hi")
+        return await self.message(mobj.channel, "Hi")
 
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")

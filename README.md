@@ -8,7 +8,6 @@ A collection of Robots for Discord.
 * [AsyncIO Docs](https://docs.python.org/3.4/library/asyncio.html)
 * [Discord.py API](http://discordpy.readthedocs.io/en/latest/api.html)
 * [Discord Dev Portal](https://discordapp.com/developers/docs/intro)
-* [Racket Threading Docs](https://docs.racket-lang.org/reference/threads.html)
 
 ### Introduction
 
@@ -27,10 +26,13 @@ Right now this project uses mostly Interactives. WebHooks are being explored.
 To run this project you will need:
 
 * Python 3.6
-* Racket 6.5
+* Racket 6.5 (for the `superv` manager)
 * Pip for Python
 * `virtualenv` installed from Pip
 * Your own set of Discord credentials to use with Bots
+
+Bots can be copied freely from the source code if you just wish to make a bot. 
+However running this repository requires the above listed requirements.
 
 ### Setup
 
@@ -44,12 +46,18 @@ make setup
 make run
 ```
 
-### Bots Maintained Actively
+If you are using Chat Bots, you need to authorize Bot applications on your
+developer page and copy the access token to a local file. If you are using
+a WebHook bot, you need to create a WebHook endpoint on a targeted channel
+and save that URI to a local file.
 
-These are the bots actively maintained in code. They're all written with Python and open-sourced for anyone to use and edit as they please.
+### Bots Maintained Currently
 
-* `dumb-bot`, a bot with very basic functionality
-* `hacker-bot`, a bot with some programmer tools
-* `dota-bot`, a bot to post latest matches and such nonsense
-* `graph-bot`, a bot used to graph mathematical figures
-* `janitor-bot`, a bot to take advantage of Discord's bot-only features like bulk-deletes
+Here's the list of bots under development.
+
+* `dumb-bot`, a basic bot to integrate with the rest of the project
+* `dota-bot`, an automated daemon to send Dota match info through WebHooks
+
+Other bots are currently being ported from an older library, have been removed, 
+or are just undergoing plain old experimentation for the time being. Disabled bots
+lie in the `junkyard` folder.

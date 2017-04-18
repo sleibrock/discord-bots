@@ -30,11 +30,8 @@ class DumbBot(ChatBot):
         p = self.filegen(f"{mobj.author.id}.dota")
         if not args:
             if p.is_file():
-                with open(p, 'r') as f:
-                    return self.message(mobj.channel, f"Current ID: {f.read()}")
-                pass
-            else:
-                return self.message(mobj.channel, "No Dota ID supplied")
+                return self.message(mobj.channel, f"ID: {p.read_text()}")
+            return self.message(mobj.channel, "No Dota ID supplied")
 
         # Get the first argument in the list and check if it's valid
         u = args[0].strip().strip("\n")
@@ -82,7 +79,6 @@ class DumbBot(ChatBot):
         """
         Get the first Youtube search result video
         Example: !yt how do I take a screenshot
-        TODO: replace BS with basic regex and requests with aiohttp
         """
         if not args:
             return await self.message(mobj.channel, "Empty search terms")

@@ -8,11 +8,18 @@ Webhook automated Dota 2 match parsing service for Discord
 
 from json import load as jload, dump as jdump
 from time import sleep
+from random import choice
 from pathlib import Path
 from Bot import WebHookBot
 from requests import get, post
 
-class Dotabot(WebHookBot):
+class DotaBot(WebHookBot):
+    """
+    Automated match-fetching bot for Discord
+    Users can register through a chat bot or the
+    files can be stored on the host machine
+    (or perhaps, even on a website?)
+    """
 
     DELAY_GAP = 30
     OPENDOTA_API = "https://api.opendota.com/api"
@@ -20,24 +27,58 @@ class Dotabot(WebHookBot):
     HERO_FILE = "heroes.json" 
     
     def __init__(self, name):
-        super(Dotabot, self).__init__(name)
-        self.SLEEP_TIME = 60 * 20
-        self.filegen = self._create_filegen("shared")
-        self.heroes = list()
-        self.herojson = self.filegen(self.HERO_FILE)
+        super(DotaBot, self).__init__(name)
+        self.heroes     = list()
+        self.filegen    = self._create_filegen("shared")
+        self.herojson   = self.filegen(self.HERO_FILE)
+        self.SLEEP_TIME = 60 * 60 # refresh every hour
+        self._load_hero_data()
 
-    def _load_hero_data(self):
+    def _load_hero_data(self, force=False):
+        "Prefetch the Hero JSON from OpenDota"
         if self.herojson.is_file():
             with open(self.herojson, 'r') as f:
                 self.heroes = jload(f)
-        else:
-            r = get(f"{self.OPENDOTA_API}/heroes")
-            if r.status_code != 200:
-                raise IOError("Failed to prefetch Hero JSON data from OpenDota")
-            with open(self.herojson, 'w') as f:
-                jdump(r.json(), f)
-            self.heroes = r.json()
+                return
+        r = get(f"{self.OPENDOTA_API}/heroes")
+        if r.status_code != 200:
+            raise IOError("Failed to prefetch Hero JSON data from OpenDota")
+        with open(self.herojson, 'w') as f:
+            jdump(r.json(), f)
+        self.heroes = r.json()
         return
+
+    def find_hero(self, hid):
+        "Wrapper for finding a hero in a haystack of heroes"
+        for hero in self.heroes:
+            if hero["id"] == hid:
+                return hero["localized_name"]
+        return "Jebaited"
+
+    @staticmethod
+    def to_percent(a=0, b=0, d=1):
+        "Convert (a+b)/d to a 1.23 float"
+        if d == 0:
+            raise ZeroDivisionError("Can't do that")
+        return round(((a+b)/float(d))*100.0 , 2)
+
+    @staticmethod
+    def get_timestr(seconds_i):
+        # divide the seconds into minutes, then 
+        minutes = seconds_i // 60
+        seconds = f"{seconds_i % 60}".zfill(2)
+        hours = ""
+        if minutes > 59:
+            hours = f"{minutes // 60}:"
+            minutes = f"{minutes % 60}".zfill(2)
+        return f"{hours}{minutes}:{seconds}"
+
+    @staticmethod
+    def get_score(p, team, rad_i, dir_i):
+        "Create a player statistical score string"
+        if team:
+            return DotaBot.to_percent(p['kills'], p['assists'], rad_i)
+        return DotaBot.to_percent(p['kills'], p['assists'], dir_i)
 
     def get_last_match(self, player_path):
         """
@@ -66,7 +107,7 @@ class Dotabot(WebHookBot):
         cache = Path(f"{player_path}.cache")
         cache_v = 0
         if cache.is_file():
-            cache_v = int(cache.read_text())
+            cache_v = int(cache.read_text()) # bad
 
         # If the cache value is different from the new match iD,
         # Write to the cache file and return the (Match * ID) pair
@@ -88,36 +129,26 @@ class Dotabot(WebHookBot):
         jsonblob = resp.json()
         data = dict()
         embs = list()
-                    
-        radiant_win = jsonblob["radiant_win"]
-        radiant_score = jsonblob["radiant_score"]
-        dire_score = jsonblob["dire_score"]
-        game_mode = jsonblob["game_mode"]
-        duration = jsonblob["duration"]
         
-        minutes = str(duration // 60)
-        seconds = str(duration % 60).zfill(2)
+        # Game dependent variables
+        radiant_win   = jsonblob["radiant_win"]
+        radiant_score = jsonblob["radiant_score"]
+        dire_score    = jsonblob["dire_score"]
+        game_mode     = jsonblob["game_mode"]
+        duration      = self.get_timestr(jsonblob["duration"])
         
         player = None
         for p in jsonblob["players"]:
             if str(p["account_id"]) == dota_id:
-                self.logger("Found the player")
                 player = p
         if player is None:
             self.logger("Failed to find the player")
-            return False
+            return None 
                 
         # Player variable declarations for use later
         player_team = player["isRadiant"]
         pname = player["personaname"]
-        hero_id = player["hero_id"]
-
-        # Hero searching
-        hero_name = "Jebaited"
-        for hero in self.heroes:
-            if hero["id"] == hero_id:
-                hero_name = hero["localized_name"]
-                break
+        hero_name = self.find_hero(player["hero_id"])
         
         # Score of game
         embs.append({
@@ -127,14 +158,11 @@ class Dotabot(WebHookBot):
         })
     
         # Player Stats field
-        if player_team:
-            percent_of_team = round(((player["kills"]+player["assists"]) / float(radiant_score)) * 100.0, 2)
-        else:
-            percent_of_team = round(((player["kills"]+player["assists"]) / float(dire_score)) * 100.0, 2)
+        perc_team = self.get_score(player, radiant_win, radiant_score, dire_score)
         
         embs.append({
             "name": "Stats (KDA)",
-        "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({percent_of_team}% involvement)",
+            "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({perc_team}% involvement)",
             "inline": True
         })
         
@@ -144,33 +172,56 @@ class Dotabot(WebHookBot):
             "value": f"{player['gold_per_min']} / {player['xp_per_min']}",
             "inline": True
         })
+
+        # Damge / Healing / Towers
+        embs.append({
+            "name": "HD / HH / TD",
+            "value": f"{player['hero_damage']} / {player['hero_healing']} / {player['tower_damage']}",
+            "inline": True,
+        })
         
-        # Replay sensitive data follows after this comment
-        # OpenDota takes time to parse the replay of each match, such that more info can be gathered
-        # from the match. Things like chat, pings, runes and damage instances are all based on replays
-        # If this stuff isn't immediately available, it shouldn't be added to the Embed
+        # replay sensitive data is still tagged in the JSON output
+        # such that trying to access a replay tag will always be None
         # ping details
-        if 'pings' in player:
+        pings = player.get('pings', None)
+        if pings is not None:
             total_pings = sum([p.get('pings', 0) for p in jsonblob["players"] if p["isRadiant"] == player_team])
-            pingpc = round((float(player["pings"]) / total_pings) * 100.0, 2)
+            pingpc = self.to_percent(pings, 0, total_pings)
             embs.append({
                 "name": "Total Pings",
                 "value": f"{player['pings']} ({pingpc}% of team)",
                 "inline": True
             })
-            print("e")
 
-        # rune details
-        if 'runes' in player:
-            pass
+        # rune details - fetch the bounty rune stuff
+        runes = player.get('runes', None)
+        if runes is not None:
+            total_bounties = sum([p['runes']['5'] for p in jsonblob['players']])
+            bountypc = self.to_percent(runes['5'], 0, total_bounties)
+            embs.append({
+                "name": "Bounties Collected",
+                "value": f"{runes['5']} ({bountypc}% of game)",
+                "inline": True
+            })
+
+        # Fetch a random quote from the match
+        chat = jsonblob.get('chat', None)
+        if 'chat' is not None:
+            user_lines = [l['key'] for l in chat if l['unit'] == pname]
+            if user_lines:
+                embs.append({
+                    "name": "Random Quote",
+                    "value": f"'{choice(user_lines)}' -{pname}",
+                    "inline": True
+                })
         
         # craft the main embed
-        winstatus = "won" if player_team == radiant_win else "lost"
+        winstatus = "won" if player_team & radiant_win else "lost"
         data["embeds"] = [{
             "title": f"Results for Match #{match_id}",
-            "description": f"{player['personaname']} {winstatus} as {hero_name} ({minutes}:{seconds})",
+            "description": f"{player['personaname']} {winstatus} as {hero_name} ({duration})",
             "url": f"{self.OPENDOTA_URL}/{match_id}",
-            "color": int(match_id % 0xffffff),
+            "color": match_id % 0xffffff,
             "fields": embs,
             "footer": {
                 "text": "Provided by OpenDota API"
@@ -179,16 +230,13 @@ class Dotabot(WebHookBot):
         return data
 
     def post_payload(self, data={}):
-        """
-        Send a dictionary of data to the Discord endpoint
-        """
+        "Send a data dict to the Discord endpoint"
         if not data:
             return False
         re = post(self.endpoint, json=data, headers={'content-type': 'application/json'})
         return re
 
     def main(self):
-        self._load_hero_data()
         self.logger(f"Heroes loaded: {len(self.heroes)}")
         files = [f for f in self.filegen().iterdir() if f"{f}".endswith("dota")]
         self.logger(f"Keys: {files}")
@@ -200,11 +248,10 @@ class Dotabot(WebHookBot):
                 if not payload: 
                     self.logger("Failed to craft a payload")
                 r = self.post_payload(payload)
-                print(r.status_code)
             sleep(self.DELAY_GAP)
             pass
 
 if __name__ == "__main__":
-    bot = Dotabot("dotabot")
+    bot = DotaBot("dota-bot")
     bot.run()
 # end

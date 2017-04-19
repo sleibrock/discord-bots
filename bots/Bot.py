@@ -178,11 +178,11 @@ class ChatBot(Bot):
         return res[-2]
 
     async def set_status(self, string):
-        "Set the client's status via a Game object"
-        return await self.client.change_status(Game(string))
+        "Set the client's presence via a Game object"
+        return await self.client.change_presence(game=Game(name=string))
 
-    # Override-able events for your Discord bots
     def event_ready(self):
+        "Change this event to change what happens on login"
         async def on_ready():
             self.display_no_servers()
             await self.set_status(self.STATUS)
@@ -190,11 +190,13 @@ class ChatBot(Bot):
         return on_ready
 
     def event_error(self):
+        "Change this for better error logging if needed"
         async def on_error(msg, *args, **kwargs):
             return self.logger(f"Discord error: {msg}")
         return on_error
 
     def event_message(self):
+        "Change this to change overall on message behavior"
         async def on_message(msg):
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
@@ -252,6 +254,8 @@ class WebHookBot(Bot):
     NOTE: WebHookBots can not receive user input directly from a Discord channel
     Use a ChatBot to take input from a user and write it to a file a WebHookBot
     can access easily (a "shared" folder)
+
+    (With some changes, WebHook bot could be made to use asyncio/uvloop)
     """
     SLEEP_TIME = 60
 

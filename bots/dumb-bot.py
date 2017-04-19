@@ -19,9 +19,9 @@ class DumbBot(ChatBot):
     STATUS = "I'm a bot, Beep Bloop!"
 
     # Used to convert chars to emojis for /roll
-    emojis = dict(enumerate([f":{x}:" for x in
+    emojis = {f"{i}":x for i, x in enumerate([f":{x}:" for x in
         ("zero", "one", "two", "three", "four", 
-         "five", "six", "seven", "eight", "nine")]))
+         "five", "six", "seven", "eight", "nine")])}
 
     def __init__(self, name):
         super(DumbBot, self).__init__(name)
@@ -75,12 +75,12 @@ class DumbBot(ChatBot):
         Do a coin flip
         Example: !coin
         """
-        return await self.message(mobj.channel, choice(["Heads", "Tails"]))
+        return await self.message(mobj.channel, choice([":monkey:", ":snake:"]))
 
     @ChatBot.action
     async def roll(self, args, mobj):
         """
-        Make a roll (similar to Dota 2's /roll) between [0..1000]
+        Make a roll (similar to Dota 2's /roll) between [1..1000]
         Example: !roll 100
         """
         if not args or len(args) > 1:
@@ -91,7 +91,7 @@ class DumbBot(ChatBot):
             return await self.message(mobj.channel, "Non-numeric arg given")
 
         num = int(x) # bad 
-        if 0 > num > 1000:
+        if num < 1 or num > 1000:
             return await self.message(mobj.channel, "Invalid range given")
 
         res = [self.emojis[x] for x in str(randint(1, num)).zfill(len(x))]

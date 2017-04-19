@@ -163,13 +163,6 @@ class DotaBot(WebHookBot):
             "inline": True
         })
         
-        # GPM / XPM
-        embs.append({
-            "name": "GPM / XPM",
-            "value": f"{player['gold_per_min']} / {player['xp_per_min']}",
-            "inline": True
-        })
-
         # replay sensitive data is still tagged in the JSON output
         # such that trying to access a replay tag will always be None or some_value
         # ping details

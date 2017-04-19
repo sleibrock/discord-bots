@@ -6,8 +6,7 @@ from time import strftime, localtime
 from pathlib import Path
 from time import sleep
 
-import discord
-from discord import Embed
+from discord import Client, Game
 
 """
 The new and improved class-based Bot library
@@ -99,7 +98,6 @@ class Bot(object):
         """
         return Bot._read_file(Path(self.KEY_FOLDER, f"{self.name}.key")).strip("\n")
 
-
 class ChatBot(Bot):
     """
     The ChatBot is a wrapper for the Discord client itself
@@ -119,6 +117,9 @@ class ChatBot(Bot):
     BADWORDS = ["fuck", "cock", "child", "kiddy", "porn", "pron", "pr0n",
                 "masturbate", "bate", "shit", "piss", "anal", "cum", "wank"]
 
+    # Change this to adjust your default status setting (loads in on_ready())
+    STATUS = "Beep bloop!"
+
     @staticmethod
     def action(function):
         """
@@ -136,7 +137,7 @@ class ChatBot(Bot):
     def __init__(self, name):
         super(ChatBot, self).__init__(name)
         self.actions = dict()
-        self.client = discord.Client()
+        self.client = Client()
         self.token = self.read_key()
 
     async def message(self, channel, string):
@@ -176,10 +177,15 @@ class ChatBot(Bot):
             return None
         return res[-2]
 
+    async def set_status(self, string):
+        "Set the client's status via a Game object"
+        return await self.client.change_status(Game(string))
+
     # Override-able events for your Discord bots
     def event_ready(self):
         async def on_ready():
             self.display_no_servers()
+            await self.set_status(self.STATUS)
             return self.logger(f"Connection status: {self.client.is_logged_in}")
         return on_ready
 
@@ -195,7 +201,7 @@ class ChatBot(Bot):
             if key in self.ACTIONS:
                 if len(args) >= 1:
                     if args[0].lower() == "help":
-                        return await self.client.send_message(
+                        return await self.message(
                             msg.channel,
                             self.pre_text(
                                 f"Help for '{key}':{self.ACTIONS[key].__doc__}"
@@ -280,8 +286,5 @@ class WebHookBot(Bot):
         finally:
             self.logger(f"Shutting down {self.name}")
         return quit()
-            
-        
-        
             
 # end 

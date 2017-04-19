@@ -16,6 +16,13 @@ class DumbBot(ChatBot):
     allow Dumb Bot to access the shared pool
     """
 
+    STATUS = "I'm a bot, Beep Bloop!"
+
+    # Used to convert chars to emojis for /roll
+    emojis = dict(enumerate([f":{x}:" for x in
+        ("zero", "one", "two", "three", "four", 
+         "five", "six", "seven", "eight", "nine")]))
+
     def __init__(self, name):
         super(DumbBot, self).__init__(name)
         self.filegen = self._create_filegen("shared")
@@ -26,7 +33,20 @@ class DumbBot(ChatBot):
         Return a link to a command reference sheet
         If you came here from !howto help, you're out of luck
         """
-        return await self.message(mobj.channel, "https://google.com/")
+        output = "Thank you for choosing Dumb Bot™ for your channel\n"
+        output += "Here are the available commands\n\n"
+        for c in [f"{k}" for k in self.ACTIONS.keys()]:
+            output += f"* {c}\n"
+        output += "\nFor more info on each command, use '!command help'"
+        return await self.message(mobj.channel, self.pre_text(output))
+
+    @ChatBot.action
+    async def status(self, args, mobj):
+        """
+        Change the bot's status to a given string
+        Example: !status haha ur dumb
+        """
+        return await self.set_status(" ".join(args))
         
     @ChatBot.action
     async def dota(self, args, mobj):
@@ -58,27 +78,24 @@ class DumbBot(ChatBot):
         return await self.message(mobj.channel, choice(["Heads", "Tails"]))
 
     @ChatBot.action
-    async def rtd(self, args, mobj):
+    async def roll(self, args, mobj):
         """
-        Roll the dice - !rtd <Num of dice> <Num of sides>
-        Example: !rtd 10 3
+        Make a roll (similar to Dota 2's /roll) between [0..1000]
+        Example: !roll 100
         """
-        if len(args) != 2:
-            return await self.message(mobj.channel, "Invalid arg amount")
+        if not args or len(args) > 1:
+            return await self.message(mobj.channel, "Invalid arg count")
 
-        if not all((x.isnumeric() for x in args)):
-            return await self.message(mobj.channel, "Non-numeric args given")
+        x, = args
+        if not x.isnumeric():
+            return await self.message(mobj.channel, "Non-numeric arg given")
 
-        # Check args are numbers via a list comp / all() check
-        nums = [int(x) for x in args]
-        if not all([n for n in nums if 0 < n < 101]):
-            return await self.message(mobj.channel, "Invalid ranges given")
+        num = int(x) # bad 
+        if 0 > num > 1000:
+            return await self.message(mobj.channel, "Invalid range given")
 
-        numd, sides = nums[:2]
-        results = [str(randint(1, sides)) for i in range(numd)]
-        
-        self.logger("Sending message")
-        return await self.message(mobj.channel, ", ".join(results))
+        res = [self.emojis[x] for x in str(randint(1, num)).zfill(len(x))]
+        return await self.message(mobj.channel, "".join(res))
 
     @ChatBot.action
     async def yt(self, args, mobj):
@@ -119,19 +136,8 @@ class DumbBot(ChatBot):
         """
         if not args or len(args) > 10:
             return await self.message(mobj.channel, "Invalid spam input")
-
         y = args * randint(5, 20)
         return await self.message(mobj.channel, f"{' '.join(y)}")
-
-    @ChatBot.action
-    async def test(self, args, mobj):
-        """
-        THIS
-        DOES
-        NOTHING
-        """
-        self.logger(f"args: {args}")
-        return await self.message(mobj.channel, "Hi")
 
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")

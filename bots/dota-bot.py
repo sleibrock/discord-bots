@@ -64,7 +64,7 @@ class DotaBot(WebHookBot):
 
     @staticmethod
     def get_timestr(seconds_i):
-        # divide the seconds into minutes, then 
+        "Create a [H:]M:S string from seconds"
         minutes = seconds_i // 60
         seconds = f"{seconds_i % 60}".zfill(2)
         hours = ""
@@ -98,6 +98,7 @@ class DotaBot(WebHookBot):
 
         data = resp.json()
         if not data:
+            self.logger("No matches to be found (???)")
             return (None, None) # no matches played
         
         match_id = data[0]["match_id"]
@@ -117,18 +118,14 @@ class DotaBot(WebHookBot):
         return (None, None)
                 
     def get_payload(self, match_id, dota_id):
-        """
-        Craft a payload of Dota 2 match info
-        The nested JSON is per the Discord webhook Embed format
-        
-        TODO: think of a sane way to compose these into functions perhaps?
-        """
+        "Craft an embed payload for the Discord endpoint"
         resp = get(f"{self.OPENDOTA_API}/matches/{match_id}")
         if resp.status_code != 200:
             raise IOError("Failed to get data from OpenDota API")
+
         jsonblob = resp.json()
-        data = dict()
-        embs = list()
+        data     = dict()
+        embs     = list()
         
         # Game dependent variables
         radiant_win   = jsonblob["radiant_win"]
@@ -137,6 +134,7 @@ class DotaBot(WebHookBot):
         game_mode     = jsonblob["game_mode"]
         duration      = self.get_timestr(jsonblob["duration"])
         
+        # Find the player (or not, then just fail)
         player = None
         for p in jsonblob["players"]:
             if str(p["account_id"]) == dota_id:
@@ -147,8 +145,8 @@ class DotaBot(WebHookBot):
                 
         # Player variable declarations for use later
         player_team = player["isRadiant"]
-        pname = player["personaname"]
-        hero_name = self.find_hero(player["hero_id"])
+        pname       = player["personaname"]
+        hero_name   = self.find_hero(player["hero_id"])
         
         # Score of game
         embs.append({
@@ -159,10 +157,9 @@ class DotaBot(WebHookBot):
     
         # Player Stats field
         perc_team = self.get_score(player, radiant_win, radiant_score, dire_score)
-        
         embs.append({
             "name": "Stats (KDA)",
-            "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({perc_team}% involvement)",
+            "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({perc_team}% of team)",
             "inline": True
         })
         
@@ -173,15 +170,8 @@ class DotaBot(WebHookBot):
             "inline": True
         })
 
-        # Damge / Healing / Towers
-        embs.append({
-            "name": "HD / HH / TD",
-            "value": f"{player['hero_damage']} / {player['hero_healing']} / {player['tower_damage']}",
-            "inline": True,
-        })
-        
         # replay sensitive data is still tagged in the JSON output
-        # such that trying to access a replay tag will always be None
+        # such that trying to access a replay tag will always be None or some_value
         # ping details
         pings = player.get('pings', None)
         if pings is not None:
@@ -229,9 +219,10 @@ class DotaBot(WebHookBot):
         }]
         return data
 
-    def post_payload(self, data={}):
+    def post_payload(self, data):
         "Send a data dict to the Discord endpoint"
         if not data:
+            self.logger("Invalid payload, nothing sent")
             return False
         re = post(self.endpoint, json=data, headers={'content-type': 'application/json'})
         return re
@@ -245,11 +236,9 @@ class DotaBot(WebHookBot):
             if last_match is not None:
                 self.logger("Posting match")
                 payload = self.get_payload(last_match, dota_id)
-                if not payload: 
-                    self.logger("Failed to craft a payload")
-                r = self.post_payload(payload)
+                self.post_payload(payload)
             sleep(self.DELAY_GAP)
-            pass
+        self.logger("Finished looping")
 
 if __name__ == "__main__":
     bot = DotaBot("dota-bot")

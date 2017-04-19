@@ -7,8 +7,15 @@ from requests import get
 from bs4 import BeautifulSoup as BS
 
 class DumbBot(ChatBot):
-    GRAMLIST = "list.instagram"
-    
+    """
+    Dumb Bot is a basic toy bot integration
+    He has some built in functionality as well as webhook-bot
+    integrations to provide a connection to webhooks
+
+    WebHook data is stored in the 'shared' folder, so we
+    allow Dumb Bot to access the shared pool
+    """
+
     def __init__(self, name):
         super(DumbBot, self).__init__(name)
         self.filegen = self._create_filegen("shared")
@@ -30,17 +37,16 @@ class DumbBot(ChatBot):
         p = self.filegen(f"{mobj.author.id}.dota")
         if not args:
             if p.is_file():
-                return self.message(mobj.channel, f"ID: {p.read_text()}")
-            return self.message(mobj.channel, "No Dota ID supplied")
+                return await self.message(mobj.channel, f"ID: {p.read_text()}")
+            return await self.message(mobj.channel, "No Dota ID supplied")
 
         # Get the first argument in the list and check if it's valid
         u = args[0].strip().strip("\n")
         if len(u) > 30 or not u.isnumeric():
             return await self.message(mobj.channel, "Invalid ID given")
 
-        # Write to file
+        # Write to file and finish
         p.write_text(u)
-
         return await self.message(mobj.channel, f"Registered ID {u}")
 
     @ChatBot.action
@@ -63,8 +69,8 @@ class DumbBot(ChatBot):
         if not all((x.isnumeric() for x in args)):
             return await self.message(mobj.channel, "Non-numeric args given")
 
+        # Check args are numbers via a list comp / all() check
         nums = [int(x) for x in args]
-
         if not all([n for n in nums if 0 < n < 101]):
             return await self.message(mobj.channel, "Invalid ranges given")
 

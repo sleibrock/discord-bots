@@ -21,7 +21,7 @@ class DotaBot(WebHookBot):
     (or perhaps, even on a website?)
     """
 
-    DELAY_GAP = 30
+    DELAY_GAP = 60
     OPENDOTA_API = "https://api.opendota.com/api"
     OPENDOTA_URL = "https://opendota.com/matches"
     HERO_FILE = "heroes.json" 
@@ -60,7 +60,7 @@ class DotaBot(WebHookBot):
         "Convert (a+b)/d to a 1.23 float"
         if d == 0:
             raise ZeroDivisionError("Can't do that")
-        return round(((a+b)/float(d))*100.0 , 2)
+        return round(((a+b)/float(d))*100.0, 2)
 
     @staticmethod
     def get_timestr(seconds_i):
@@ -72,13 +72,6 @@ class DotaBot(WebHookBot):
             hours = f"{minutes // 60}:"
             minutes = f"{minutes % 60}".zfill(2)
         return f"{hours}{minutes}:{seconds}"
-
-    @staticmethod
-    def get_score(p, team, rad_i, dir_i):
-        "Create a player statistical score string"
-        if team:
-            return DotaBot.to_percent(p['kills'], p['assists'], rad_i)
-        return DotaBot.to_percent(p['kills'], p['assists'], dir_i)
 
     def get_last_match(self, player_path):
         """
@@ -156,15 +149,21 @@ class DotaBot(WebHookBot):
         })
     
         # Player Stats field
-        perc_team = self.get_score(player, radiant_win, radiant_score, dire_score)
+        if player_team & radiant_win:
+            pt = self.percent(player['kills'], player['assists'], radiant_score)
+        else:
+            pt = self.percent(player['kills'], player['assists'], dire_score)
         embs.append({
             "name": "Stats (KDA)",
-            "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({perc_team}% of team)",
+            "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({pt}% of team)",
             "inline": True
         })
         
         # replay sensitive data is still tagged in the JSON output
         # such that trying to access a replay tag will always be None or some_value
+        # Use <dictproperty>.get(key, <default_value>) to request a value
+        # and check if the dictionary is there (it will be None otherwise)
+
         # ping details
         pings = player.get('pings', None)
         if pings is not None:
@@ -179,8 +178,8 @@ class DotaBot(WebHookBot):
         # rune details - fetch the bounty rune stuff
         runes = player.get('runes', None)
         if runes is not None:
-            total_bounties = sum([p['runes']['5'] for p in jsonblob['players']])
-            bountypc = self.to_percent(runes['5'], 0, total_bounties)
+            total_bounties = sum([p['runes'].get('5', 0) for p in jsonblob['players']])
+            bountypc = self.to_percent(runes.get('5', 0), 0, total_bounties)
             embs.append({
                 "name": "Bounties Collected",
                 "value": f"{runes['5']} ({bountypc}% of game)",
@@ -218,6 +217,8 @@ class DotaBot(WebHookBot):
             self.logger("Invalid payload, nothing sent")
             return False
         re = post(self.endpoint, json=data, headers={'content-type': 'application/json'})
+        if re.status_code != 204:
+            return self.logger("Failed to post match")
         return re
 
     def main(self):

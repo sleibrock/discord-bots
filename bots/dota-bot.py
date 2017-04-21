@@ -56,7 +56,7 @@ class DotaBot(WebHookBot):
         return "Jebaited"
 
     @staticmethod
-    def to_percent(a=0, b=0, d=1):
+    def percent(a=0, b=0, d=1):
         "Convert (a+b)/d to a 1.23 float"
         if d == 0:
             raise ZeroDivisionError("Can't do that")
@@ -168,7 +168,7 @@ class DotaBot(WebHookBot):
         pings = player.get('pings', None)
         if pings is not None:
             total_pings = sum([p.get('pings', 0) for p in jsonblob["players"] if p["isRadiant"] == player_team])
-            pingpc = self.to_percent(pings, 0, total_pings)
+            pingpc = self.percent(pings, 0, total_pings)
             embs.append({
                 "name": "Total Pings",
                 "value": f"{player['pings']} ({pingpc}% of team)",
@@ -179,7 +179,7 @@ class DotaBot(WebHookBot):
         runes = player.get('runes', None)
         if runes is not None:
             total_bounties = sum([p['runes'].get('5', 0) for p in jsonblob['players']])
-            bountypc = self.to_percent(runes.get('5', 0), 0, total_bounties)
+            bountypc = self.percent(runes.get('5', 0), 0, total_bounties)
             embs.append({
                 "name": "Bounties Collected",
                 "value": f"{runes['5']} ({bountypc}% of game)",

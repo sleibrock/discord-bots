@@ -220,7 +220,7 @@ class DotaBot(WebHookBot):
         
         # craft the main embed
         hname = self.JOKES1.get(hero_name, hero_name)
-        winstatus = "won" if player_team & radiant_win else "lost"
+        winstatus = "won" if player_team is radiant_win else "lost"
         data["embeds"] = [{
             "title": f"Results for Match #{match_id}",
             "description": f"{pname} {winstatus} as {hname} ({duration})",

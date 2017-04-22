@@ -25,6 +25,27 @@ class DotaBot(WebHookBot):
     OPENDOTA_API = "https://api.opendota.com/api"
     OPENDOTA_URL = "https://opendota.com/matches"
     HERO_FILE = "heroes.json" 
+
+    JOKES1 = {
+        "Wraith King":      "SKELETON KING",
+        "Queen of Pain":    "s4 Cop",
+        "Leshrac":          "Shrack",
+        "Bristleback":      "Bristlebutt",
+        "Nature's Prophet": "Admiral Bulldog",
+        "Pudge":            "Dendi",
+    }
+
+    JOKES2 = {
+        "Wraith King": "**DEATH IS MY BITCH**",
+        "Ogre Magi": "**4 X M U L T I C A S T**",
+        "Skywrath Mage": "From the Ghastly Eeyrie...",
+        "Kunkka": "No room to swing a cat in this crowd",
+        "Puck": "Do you remember the million dollar dream carl?",
+        "Legion Commander": "FIGHT ME",
+        "Venomancer": ":snake: With Vim and Venom :snake:",
+        "Lycan": ":dog: WOOF :dog: WOOF :dog:",
+        "Monkey King": "I NEED NO INTRODUCTION",
+    }
     
     def __init__(self, name):
         super(DotaBot, self).__init__(name)
@@ -59,7 +80,7 @@ class DotaBot(WebHookBot):
     def percent(a=0, b=0, d=1):
         "Convert (a+b)/d to a 1.23 float"
         if d == 0:
-            raise ZeroDivisionError("Can't do that")
+            return 0
         return round(((a+b)/float(d))*100.0, 2)
 
     @staticmethod
@@ -198,15 +219,16 @@ class DotaBot(WebHookBot):
                 })
         
         # craft the main embed
+        hname = self.JOKES1.get(hero_name, hero_name)
         winstatus = "won" if player_team & radiant_win else "lost"
         data["embeds"] = [{
             "title": f"Results for Match #{match_id}",
-            "description": f"{player['personaname']} {winstatus} as {hero_name} ({duration})",
+            "description": f"{pname} {winstatus} as {hname} ({duration})",
             "url": f"{self.OPENDOTA_URL}/{match_id}",
             "color": match_id % 0xffffff,
             "fields": embs,
             "footer": {
-                "text": "Provided by OpenDota API"
+                "text": self.JOKES2.get(hero_name, "Provided by OpenDota API")
             }
         }]
         return data

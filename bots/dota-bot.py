@@ -36,15 +36,18 @@ class DotaBot(WebHookBot):
     }
 
     JOKES2 = {
-        "Wraith King": "**DEATH IS MY BITCH**",
-        "Ogre Magi": "**4 X M U L T I C A S T**",
+        "Wraith King": "DEATH IS MY BITCH",
+        "Ogre Magi": "4 X M U L T I C A S T",
         "Skywrath Mage": "From the Ghastly Eeyrie...",
         "Kunkka": "No room to swing a cat in this crowd",
         "Puck": "Do you remember the million dollar dream carl?",
         "Legion Commander": "FIGHT ME",
         "Venomancer": ":snake: With Vim and Venom :snake:",
         "Lycan": ":dog: WOOF :dog: WOOF :dog:",
-        "Monkey King": "I NEED NO INTRODUCTION",
+        "Monkey King": "SKE-DOOSH",
+        "Shadow Shaman": "MY ANCESTORS",
+        "Nature's Prophet": "+4 Treants? :thinking:",
+        "Undying": "Left 4 Dead"
     }
     
     def __init__(self, name):
@@ -142,10 +145,10 @@ class DotaBot(WebHookBot):
         embs     = list()
         
         # Game dependent variables
+        players       = jsonblob["players"]
         radiant_win   = jsonblob["radiant_win"]
-        radiant_score = jsonblob["radiant_score"]
-        dire_score    = jsonblob["dire_score"]
         game_mode     = jsonblob["game_mode"]
+        scores        = (jsonblob["radiant_score"], jsonblob["dire_score"])
         duration      = self.get_timestr(jsonblob["duration"])
         
         # Find the player (or not, then just fail)
@@ -156,27 +159,25 @@ class DotaBot(WebHookBot):
         if player is None:
             self.logger("Failed to find the player")
             return None 
-                
+
         # Player variable declarations for use later
-        player_team = player["isRadiant"]
+        k, a, d     = player['kills'], player['assists'], player['deaths']
+        team        = player["isRadiant"]
         pname       = player["personaname"]
         hero_name   = self.find_hero(player["hero_id"])
         
         # Score of game
         embs.append({
             "name": "Final Score",
-            "value": f"Radiant **{radiant_score}** - **{dire_score}** Dire",
+            "value": f"Radiant **{scores[0]}** - **{scores[1]}** Dire",
             "inline": True
         })
     
         # Player Stats field
-        if player_team & radiant_win:
-            pt = self.percent(player['kills'], player['assists'], radiant_score)
-        else:
-            pt = self.percent(player['kills'], player['assists'], dire_score)
+        pt = self.percent(k, a, scores[0 if team == radiant_win else 1])
         embs.append({
             "name": "Stats (KDA)",
-            "value": f"{player['kills']}/{player['deaths']}/{player['assists']} ({pt}% of team)",
+            "value": f"{k}/{d}/{a} ({pt}% of team)",
             "inline": True
         })
         
@@ -188,39 +189,39 @@ class DotaBot(WebHookBot):
         # ping details
         pings = player.get('pings', None)
         if pings is not None:
-            total_pings = sum([p.get('pings', 0) for p in jsonblob["players"] if p["isRadiant"] == player_team])
-            pingpc = self.percent(pings, 0, total_pings)
+            tp = sum([p.get('pings', 0) for p in players if p["isRadiant"] == team])
+            pingpc = self.percent(pings, 0, tp)
             embs.append({
                 "name": "Total Pings",
-                "value": f"{player['pings']} ({pingpc}% of team)",
+                "value": f"{player.get('pings', 0)} ({pingpc}% of team)",
                 "inline": True
             })
 
         # rune details - fetch the bounty rune stuff
         runes = player.get('runes', None)
         if runes is not None:
-            total_bounties = sum([p['runes'].get('5', 0) for p in jsonblob['players']])
+            total_bounties = sum([p['runes'].get('5', 0) for p in players])
             bountypc = self.percent(runes.get('5', 0), 0, total_bounties)
             embs.append({
                 "name": "Bounties Collected",
-                "value": f"{runes['5']} ({bountypc}% of game)",
+                "value": f"{runes.get('5', 0)} ({bountypc}% of game)",
                 "inline": True
             })
 
         # Fetch a random quote from the match
         chat = jsonblob.get('chat', None)
-        if 'chat' is not None:
+        if chat is not None:
             user_lines = [l['key'] for l in chat if l['unit'] == pname]
             if user_lines:
                 embs.append({
                     "name": "Random Quote",
-                    "value": f"'{choice(user_lines)}' -{pname}",
+                    "value": f"*{choice(user_lines)}* -{pname}",
                     "inline": True
                 })
         
         # craft the main embed
         hname = self.JOKES1.get(hero_name, hero_name)
-        winstatus = "won" if player_team is radiant_win else "lost"
+        winstatus = "won" if team is radiant_win else "lost"
         data["embeds"] = [{
             "title": f"Results for Match #{match_id}",
             "description": f"{pname} {winstatus} as {hname} ({duration})",

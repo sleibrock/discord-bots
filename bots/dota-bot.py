@@ -33,6 +33,10 @@ class DotaBot(WebHookBot):
         "Bristleback":      "Bristlebutt",
         "Nature's Prophet": "Admiral Bulldog",
         "Pudge":            "Dendi",
+        "Phoenix":          "Firequacker",
+        "Tiny":             "Tony",
+        "Io":               "Wisp",
+        "Omniknight":       "Sir Action Slacks",
     }
 
     JOKES2 = {
@@ -42,12 +46,13 @@ class DotaBot(WebHookBot):
         "Kunkka": "No room to swing a cat in this crowd",
         "Puck": "Do you remember the million dollar dream carl?",
         "Legion Commander": "FIGHT ME",
-        "Venomancer": ":snake: With Vim and Venom :snake:",
-        "Lycan": ":dog: WOOF :dog: WOOF :dog:",
+        "Venomancer": "Snek Pass",
+        "Lycan": "WOOF WOOF",
         "Monkey King": "SKE-DOOSH",
         "Shadow Shaman": "MY ANCESTORS",
-        "Nature's Prophet": "+4 Treants? :thinking:",
-        "Undying": "Left 4 Dead"
+        "Nature's Prophet": "+4 Treants",
+        "Undying": "Left 4 Dead",
+        "Spirit Breaker": "17%",
     }
     
     def __init__(self, name):
@@ -105,8 +110,20 @@ class DotaBot(WebHookBot):
         If not newer, return (None * None)
         """
         if not player_path.is_file():
-            raise IOError("Invalid Path() given for get_last_match()")
-        dota_id = player_path.read_text().strip("\n") 
+            self.logger("Invalid Path() given for get_last_match()")
+            return (None, None)
+
+        # Read the player's profile file
+        with open(player_path, 'r') as f:
+            player_data = jload(f)
+        
+        dota_id = player_data.get('dota_id', "")
+        last_match = player_data.get('last_match', 0)
+        
+        # If there's no ID at all, just stop
+        if not dota_id:
+            self.logger("Invalid dota ID string")
+            return (None, None)
 
         resp = get(f"{self.OPENDOTA_API}/players/{dota_id}/matches?limit=1")
         if resp.status_code != 200:
@@ -116,29 +133,26 @@ class DotaBot(WebHookBot):
         data = resp.json()
         if not data:
             self.logger("No matches to be found (???)")
-            return (None, None) # no matches played
+            return (None, None)
         
-        match_id = data[0]["match_id"]
+        match_id = data[0].get('match_id', 0)
+        if match_id == 0:
+            self.logger("Failed to find any new matches")
+            return (None, None)
         
-        # Check the match_id versus the one in the cache
-        # Check if a cache even exists
-        cache = Path(f"{player_path}.cache")
-        cache_v = 0
-        if cache.is_file():
-            cache_v = int(cache.read_text()) # bad
-
-        # If the cache value is different from the new match iD,
-        # Write to the cache file and return the (Match * ID) pair
-        if cache_v != match_id:
-            cache.write_text(str(match_id))
-            return (match_id, dota_id)
+        if match_id != last_match:
+            with open(player_path, 'w') as f:
+                data = {'dota_id': dota_id, 'last_match': match_id}
+                jdump(data, f)
+                return (match_id, dota_id)
         return (None, None)
                 
     def get_payload(self, match_id, dota_id):
         "Craft an embed payload for the Discord endpoint"
         resp = get(f"{self.OPENDOTA_API}/matches/{match_id}")
         if resp.status_code != 200:
-            raise IOError("Failed to get data from OpenDota API")
+            self.logger("Failed to get data from OpenDota API")
+            return None
 
         jsonblob = resp.json()
         data     = dict()
@@ -174,7 +188,7 @@ class DotaBot(WebHookBot):
         })
     
         # Player Stats field
-        pt = self.percent(k, a, scores[0 if team else radiant_win else 1])
+        pt = self.percent(k, a, scores[0 if team else 1])
         embs.append({
             "name": "Stats (KDA)",
             "value": f"{k}/{d}/{a} ({pt}% of team)",

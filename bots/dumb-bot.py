@@ -5,6 +5,7 @@ from random import randint, choice
 from Bot import ChatBot
 from requests import get
 from bs4 import BeautifulSoup as BS
+from json import dump as jdump
 
 class DumbBot(ChatBot):
     """
@@ -66,7 +67,8 @@ class DumbBot(ChatBot):
             return await self.message(mobj.channel, "Invalid ID given")
 
         # Write to file and finish
-        p.write_text(u)
+        with open(p, 'w') as f:
+            jdump({'dota_id': u}, f)
         return await self.message(mobj.channel, f"Registered ID {u}")
 
     @ChatBot.action

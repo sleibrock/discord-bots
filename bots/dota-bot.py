@@ -174,7 +174,7 @@ class DotaBot(WebHookBot):
         })
     
         # Player Stats field
-        pt = self.percent(k, a, scores[0 if team == radiant_win else 1])
+        pt = self.percent(k, a, scores[0 if team else radiant_win else 1])
         embs.append({
             "name": "Stats (KDA)",
             "value": f"{k}/{d}/{a} ({pt}% of team)",
@@ -184,7 +184,7 @@ class DotaBot(WebHookBot):
         # replay sensitive data is still tagged in the JSON output
         # such that trying to access a replay tag will always be None or some_value
         # Use <dictproperty>.get(key, <default_value>) to request a value
-        # and check if the dictionary is there (it will be None otherwise)
+        # and check if the data is there (it will be None otherwise)
 
         # ping details
         pings = player.get('pings', None)

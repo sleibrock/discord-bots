@@ -36,9 +36,33 @@ class Bot(object):
     SHARED = "shared"
     LOGSTR = "[\033[38;5;{3}m{0:<12}\033[0m @ {1}] {2}"
 
+    URLMAP = {" ": "%20", "'": "%27", "`": "%60", "%": "%25", "&": "%26",
+              "!": "%21", "@": "%40", "#": "%23", "$": "%24", "+": "%2B",
+              "*": "%2A", "^": "%5E", "(": "%28", ")": "%29", "=": "%3D",
+              "[": "%5B", "]": "%5D", "{": "%7B", "}": "%7D"}
+    
+    BADWORDS = ('fuck', 'cock', 'shit', 'piss', 'wank', 'kiddy', 'child',
+                'porn', 'masturbate', 'bate', 'anal', 'cum')
+
     # Static methods will come first
     @staticmethod
+    def replace(string="", char_map=URLMAP):
+        "Replace a string with URL safe characters (' ' => '%20')"
+        s = string
+        for k, v in char_map.items():
+            s.replace(k, v)
+        return s
+    
+    @staticmethod
+    def has_badwords(string=""):
+        "Determine if a string has a bad word in it"
+        if not string:
+            return False
+        return any((x in string for x in Bot.BADWORDS))
+
+    @staticmethod
     def _make_folder(path):
+        "Make a folder if it doesn't exist and isn't a file"
         if not path.is_dir() and not path.is_file():
             path.mkdir()
             return True
@@ -72,6 +96,7 @@ class Bot(object):
 
     @staticmethod
     def _read_file(path):
+        "Attempt to read a file from a Path"
         if not path.is_file():
             raise IOError
         with open(path, 'r') as f:
@@ -80,9 +105,7 @@ class Bot(object):
 
     @staticmethod
     def pre_text(msg, lang=None):
-        """
-        Encapsulate a string in a <pre> container
-        """
+        "Encapsulate a string in a <pre> container"
         s = "```{}```"
         if lang is not None:
             s = s.format(format+"\n{}")
@@ -96,6 +119,7 @@ class Bot(object):
     def read_key(self):
         """
         Read a bot's key JSON to get it's token/webhook link
+        Keys must be stored in the key folder and have a basic 'key':'<keytext>' object
         """
         with open(Path(self.KEY_FOLDER, f'{self.name}.key'), 'r') as f:
             datum = jload(f)
@@ -139,6 +163,13 @@ class ChatBot(Bot):
                 ChatBot.ACTIONS[f"{ChatBot.PREFIX}{function.__name__}"] = function
                 return True
         return function
+    
+    @staticmethod
+    def get_emojis(msg_obj):
+        "Fetch emojis from a Message object"
+        if msg_obj.server is not None:
+            return msg_obj.server.emojis
+        return list()
 
     # Instance methods below
     def __init__(self, name):
@@ -208,15 +239,11 @@ class ChatBot(Bot):
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:
-                if len(args) >= 1:
-                    if args[0].lower() == "help":
-                        return await self.message(
-                            msg.channel,
-                            self.pre_text(
-                                f"Help for '{key}':{self.ACTIONS[key].__doc__}"
-                            )
-                        )
+                if len(args) and args[0].lower() == "help":
+                    t = self.pre_text(f'Help for \'{key}\':{self.ACTIONS[key].__doc__}')
+                    return await self.message(msg.channel, t)
                 return await self.ACTIONS[key](self, args, msg)
+            return
         return on_message
 
     def setup_events(self):
@@ -260,7 +287,8 @@ class WebHookBot(Bot):
     
     NOTE: WebHookBots can not receive user input directly from a Discord channel
     Use a ChatBot to take input from a user and write it to a file a WebHookBot
-    can access easily (a "shared" folder)
+    can access easily (a "shared" folder), or a microservice like a database,
+    memcache or even a messaging queue like Rabbitmq/Zeromq
 
     (With some changes, WebHook bot could be made to use asyncio/uvloop)
     """

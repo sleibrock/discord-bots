@@ -53,7 +53,7 @@ class DumbBot(ChatBot):
     async def dota(self, args, mobj):
         """
         Register a Dota ID
-        Example: !yt 40281889
+        Example: !dota 40281889
         """
         p = self.filegen(f"{mobj.author.id}.dota")
         if not args:
@@ -107,34 +107,32 @@ class DumbBot(ChatBot):
         """
         if not args:
             return await self.message(mobj.channel, "Empty search terms")
-
-        url = f"https://www.youtube.com/results?search_query={' '.join(args)}"
-        resp = get(url)
+        
+        tube = "https://www.youtube.com"
+        resp = get(f"{tube}/results?search_query={self.replace(' '.join(args))}")
         if resp.status_code != 200:
             return await self.message(mobj.channel, "Failed to retrieve search")
 
         # Build a BS parser and find all Youtube links on the page
-        self.logger("Stage 1 done")
         bs = BS(resp.text, "html.parser")
         main_d = bs.find('div', id='results')
         if not main_d:
             return await self.message(mobj.channel, 'Failed to find results')
-        self.logger("stage 2")
+
         items = main_d.find_all("div", class_="yt-lockup-content")
         if not items:
             return await self.message(mobj.channel, "No videos found")
-        self.logger("stage 3")
+
         # Construct an easy list of URLs
         hrefs = [u for u in [i.find("a", class_="yt-uix-sessionlink")["href"] for i in items]
                  if u.startswith("/watch")]
 
-        self.logger("Stage 4")
         # Check if we have any at all
         if not hrefs:
             return await self.message(mobj.channel, "No URLs found (? wat)")
 
         # Finish by sending the URL out
-        return await self.message(mobj.channel, f"https://www.youtube.com{hrefs[0]}")
+        return await self.message(mobj.channel, f"{tube}{hrefs[0]}")
 
     @ChatBot.action
     async def spam(self, args, mobj):
@@ -158,12 +156,19 @@ class DumbBot(ChatBot):
         if resp.status_code != 200:
             return await self.message(mobj.channel, "Failed to copypasta")
         
-        bs = BS(resp.text, 'html.parser')
         # quote_clipboard_copy_content_
+        bs = BS(resp.text, 'html.parser')
         result = bs.find('div', id='quote_clipboard_copy_content_')
         if not result:
             return await self.message(mobj.channel, 'Couldn\'t get data (no div found)')
-        return await self.message(mobj.channel, result.text)
+
+        # replace all emotes available in the result with Discord emotes
+        t = result.text
+        emojis = self.get_emojis(mobj)
+        ed = {x.name:str(x) for x in emojis}
+        for k, v in ed.items():
+            t.replace(k, v)
+        return await self.message(mobj.channel, t)
 
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")

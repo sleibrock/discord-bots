@@ -5,6 +5,7 @@ import asyncio
 from time import strftime, localtime
 from pathlib import Path
 from time import sleep
+from json import load as jload
 
 from discord import Client, Game
 
@@ -14,14 +15,14 @@ The new and improved class-based Bot library
 Bots are broken down into two categories: Chat and Webhook
 
 Chat: a bot that receives and can send messages through guilds
-Webhook: a bot that can only send messages to specified channels
+Webhook: a bot that can only send messages to specified channel
 
-ChatBots require an authorized Discord application token, while a 
-WebHookBot only requires an endpoint acquired from setting up a 
-Webhook on a specific Discord Guild channel. Both can be useful in 
-different scenarios (Webhook is better at automated tasks, while 
+ChatBots require an authorized Discord application token, while a
+WebHookBot only requires an endpoint acquired from setting up a
+Webhook on a specific Discord Guild channel. Both can be useful in
+different scenarios (Webhook is better at automated tasks, while
 Chat is better at replying to user requests (and also voice)).
-""" 
+"""
 
 class Bot(object):
     """
@@ -51,7 +52,7 @@ class Bot(object):
         """
         color = 16 + (hash(bot_name) % 240)
         def logger(msg):
-            print(Bot.LOGSTR.format(bot_name, strftime("%H:%M%S", localtime()), msg, color))
+            print(Bot.LOGSTR.format(bot_name, strftime("%H:%M:%S", localtime()), msg, color))
             return True
         return logger
 
@@ -60,7 +61,7 @@ class Bot(object):
         """
         Create a function to generate file Paths for us
         If no filename was given, yield the path to the folder instead
-        """""
+        """
         Bot._make_folder(Path(Bot.BOT_FOLDER))
         Bot._make_folder(Path(Bot.BOT_FOLDER, bot_name))
         def bot_file(filename=None):
@@ -94,9 +95,15 @@ class Bot(object):
 
     def read_key(self):
         """
-        Read a bot's keyfile to get it's token/webhook link
+        Read a bot's key JSON to get it's token/webhook link
         """
-        return Bot._read_file(Path(self.KEY_FOLDER, f"{self.name}.key")).strip("\n")
+        with open(Path(self.KEY_FOLDER, f'{self.name}.key'), 'r') as f:
+            datum = jload(f)
+            key = datum.get("key", "")
+            if not key:
+                raise IOError("Key not found in JSON keyfile")
+            return key
+        return None
 
 class ChatBot(Bot):
     """

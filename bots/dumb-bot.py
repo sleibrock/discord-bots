@@ -114,15 +114,21 @@ class DumbBot(ChatBot):
             return await self.message(mobj.channel, "Failed to retrieve search")
 
         # Build a BS parser and find all Youtube links on the page
+        self.logger("Stage 1 done")
         bs = BS(resp.text, "html.parser")
-        items = bs.find("div", id="results").find_all("div", class_="yt-lockup-content")
+        main_d = bs.find('div', id='results')
+        if not main_d:
+            return await self.message(mobj.channel, 'Failed to find results')
+        self.logger("stage 2")
+        items = main_d.find_all("div", class_="yt-lockup-content")
         if not items:
             return await self.message(mobj.channel, "No videos found")
-
+        self.logger("stage 3")
         # Construct an easy list of URLs
         hrefs = [u for u in [i.find("a", class_="yt-uix-sessionlink")["href"] for i in items]
                  if u.startswith("/watch")]
 
+        self.logger("Stage 4")
         # Check if we have any at all
         if not hrefs:
             return await self.message(mobj.channel, "No URLs found (? wat)")
@@ -140,6 +146,24 @@ class DumbBot(ChatBot):
             return await self.message(mobj.channel, "Invalid spam input")
         y = args * randint(5, 20)
         return await self.message(mobj.channel, f"{' '.join(y)}")
+
+    @ChatBot.action
+    async def pasta(self, args, mobj):
+        """
+        Fetch a random Twitch quote (service subject to change at random)
+        Example: !pasta
+        """
+        url = "https://www.twitchquotes.com/random"
+        resp = get(url)
+        if resp.status_code != 200:
+            return await self.message(mobj.channel, "Failed to copypasta")
+        
+        bs = BS(resp.text, 'html.parser')
+        # quote_clipboard_copy_content_
+        result = bs.find('div', id='quote_clipboard_copy_content_')
+        if not result:
+            return await self.message(mobj.channel, 'Couldn\'t get data (no div found)')
+        return await self.message(mobj.channel, result.text)
 
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")

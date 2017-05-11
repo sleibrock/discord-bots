@@ -123,16 +123,12 @@ class DumbBot(ChatBot):
         if not items:
             return await self.message(mobj.channel, "No videos found")
 
-        # Construct an easy list of URLs
-        hrefs = [u for u in [i.find("a", class_="yt-uix-sessionlink")["href"] for i in items]
-                 if u.startswith("/watch")]
-
-        # Check if we have any at all
-        if not hrefs:
-            return await self.message(mobj.channel, "No URLs found (? wat)")
-
-        # Finish by sending the URL out
-        return await self.message(mobj.channel, f"{tube}{hrefs[0]}")
+        # Loop until we find a valid non-advertisement link
+        for container in items:
+            href = container.find('a', class_='yt-uix-sessionlink')['href']
+            if href.startswith('/watch'):
+                return await self.message(mobj.channel, f'{tube}{href}')        
+        return await self.message(mobj.channel, "No YouTube video found")
 
     @ChatBot.action
     async def spam(self, args, mobj):

@@ -239,7 +239,7 @@ class ChatBot(Bot):
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:
-                if len(args) and args[0].lower() == "help":
+                if len(args) == 1 and args[0].lower() == "help":
                     t = self.pre_text(f'Help for \'{key}\':{self.ACTIONS[key].__doc__}')
                     return await self.message(msg.channel, t)
                 return await self.ACTIONS[key](self, args, msg)

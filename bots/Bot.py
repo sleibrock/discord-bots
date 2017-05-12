@@ -143,6 +143,7 @@ class ChatBot(Bot):
     """
     PREFIX = "!"
     ACTIONS = dict()
+    HELPMSGS = dict()
 
     # Bad words to prevent malicious searches from a host device
     BADWORDS = ["fuck", "cock", "child", "kiddy", "porn", "pron", "pr0n",
@@ -152,17 +153,21 @@ class ChatBot(Bot):
     STATUS = "Beep bloop!"
 
     @staticmethod
-    def action(function):
+    def action(help_msg=""):
         """
         Decorator to register functions into the action map
         This is bound to static as we can't use an instance object's method
         as a decorator (could be a classmethod but who cares)
         """
-        if callable(function):
-            if function.__name__ not in ChatBot.ACTIONS:
-                ChatBot.ACTIONS[f"{ChatBot.PREFIX}{function.__name__}"] = function
-                return True
-        return function
+        def regfunc(function):
+            if callable(function):
+                if function.__name__ not in ChatBot.ACTIONS:
+                    fname = f'{ChatBot.PREFIX}{function.__name__}'
+                    ChatBot.ACTIONS[fname] = function
+                    ChatBot.HELPMSGS[fname] = help_msg.strip()
+                    return True
+            return function
+        return regfunc
     
     @staticmethod
     def get_emojis(msg_obj):
@@ -239,9 +244,6 @@ class ChatBot(Bot):
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:
-                if len(args) == 1 and args[0].lower() == "help":
-                    t = self.pre_text(f'Help for \'{key}\':{self.ACTIONS[key].__doc__}')
-                    return await self.message(msg.channel, t)
                 return await self.ACTIONS[key](self, args, msg)
             return
         return on_message

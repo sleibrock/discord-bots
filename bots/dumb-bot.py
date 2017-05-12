@@ -28,20 +28,25 @@ class DumbBot(ChatBot):
         super(DumbBot, self).__init__(name)
         self.filegen = self._create_filegen("shared")
 
-    @ChatBot.action
-    async def howto(self, args, mobj):
+    @ChatBot.action('[Command String]')
+    async def help(self, args, mobj):
         """
         Return a link to a command reference sheet
-        If you came here from !howto help, you're out of luck
+        If you came here from !help help, you're out of luck
         """
-        output = "Thank you for choosing Dumb Bot™ for your channel\n"
-        output += "Here are the available commands\n\n"
-        for c in [f"{k}" for k in self.ACTIONS.keys()]:
-            output += f"* {c}\n"
-        output += "\nFor more info on each command, use '!command help'"
+        if args:
+            key = f'{ChatBot.PREFIX}{args[0]}'
+            if key in self.ACTIONS:
+                t = self.pre_text(f'Help for \'{key}\':{self.ACTIONS[key].__doc__}')
+                return await self.message(mobj.channel, t)
+        output = 'Thank you for choosing Dumb Bot™ for your channel\n'
+        output += 'Here are the available commands\n\n'
+        for c in [f'{k}' for k in self.ACTIONS.keys()]:
+            output += f'* {c}\n {self.HELPMSGS.get(c, "")}'
+        output += f'\nFor more info on each command, use \'{ChatBot.PREFIX}help command\''
         return await self.message(mobj.channel, self.pre_text(output))
 
-    @ChatBot.action
+    @ChatBot.action('<Status String>')
     async def status(self, args, mobj):
         """
         Change the bot's status to a given string
@@ -49,7 +54,7 @@ class DumbBot(ChatBot):
         """
         return await self.set_status(" ".join(args))
         
-    @ChatBot.action
+    @ChatBot.action('<Dota ID String')
     async def dota(self, args, mobj):
         """
         Register a Dota ID
@@ -71,7 +76,7 @@ class DumbBot(ChatBot):
             jdump({'dota_id': u}, f)
         return await self.message(mobj.channel, f"Registered ID {u}")
 
-    @ChatBot.action
+    @ChatBot.action()
     async def coin(self, args, mobj):
         """
         Do a coin flip
@@ -79,7 +84,7 @@ class DumbBot(ChatBot):
         """
         return await self.message(mobj.channel, choice([":monkey:", ":snake:"]))
 
-    @ChatBot.action
+    @ChatBot.action('<Number>')
     async def roll(self, args, mobj):
         """
         Make a roll (similar to Dota 2's /roll) between [1..1000]
@@ -99,7 +104,7 @@ class DumbBot(ChatBot):
         res = [self.emojis[x] for x in str(randint(1, num)).zfill(len(x))]
         return await self.message(mobj.channel, "".join(res))
 
-    @ChatBot.action
+    @ChatBot.action('[Search terms]')
     async def yt(self, args, mobj):
         """
         Get the first Youtube search result video
@@ -130,7 +135,7 @@ class DumbBot(ChatBot):
                 return await self.message(mobj.channel, f'{tube}{href}')        
         return await self.message(mobj.channel, "No YouTube video found")
 
-    @ChatBot.action
+    @ChatBot.action('[String]')
     async def spam(self, args, mobj):
         """
         Spam a channel with dumb things
@@ -141,7 +146,7 @@ class DumbBot(ChatBot):
         y = args * randint(5, 20)
         return await self.message(mobj.channel, f"{' '.join(y)}")
 
-    @ChatBot.action
+    @ChatBot.action()
     async def pasta(self, args, mobj):
         """
         Fetch a random Twitch quote (service subject to change at random)
@@ -165,6 +170,16 @@ class DumbBot(ChatBot):
         for k, v in ed.items():
             t.replace(k, v)
         return await self.message(mobj.channel, t)
+
+    @ChatBot.action('<Poll Query>')
+    async def poll(self, args, mobj):
+        """
+        Turn a message into a 'poll' with up/down thumbs
+        Example: !poll should polling be a feature?
+        """
+        await self.client.add_reaction(mobj, '👍')
+        await self.client.add_reaction(mobj, '👎')
+        return
 
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")

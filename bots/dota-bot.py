@@ -24,7 +24,11 @@ class DotaBot(WebHookBot):
     DELAY_GAP = 60
     OPENDOTA_API = "https://api.opendota.com/api"
     OPENDOTA_URL = "https://opendota.com/matches"
-    HERO_FILE = "heroes.json" 
+    HERO_FILE = "heroes.json"
+    HEADERS = {
+        'Content-Type': 'application/json',
+        'User-Agent':   'Dota 2 scraper bot, contact steven.leibrock@gmail.com',
+    }
 
     JOKES1 = {
         "Wraith King":      "SKELETON KING",
@@ -37,6 +41,9 @@ class DotaBot(WebHookBot):
         "Tiny":             "Tony",
         "Io":               "Wisp",
         "Omniknight":       "Sir Action Slacks",
+        "Tidehunter":       "Sheever",
+        "Storm Spirit":     "Blitz Spirit",
+        "Spirit Breaker":   "Space Cow",
     }
 
     JOKES2 = {
@@ -53,6 +60,7 @@ class DotaBot(WebHookBot):
         "Nature's Prophet": "+4 Treants",
         "Undying": "Left 4 Dead",
         "Spirit Breaker": "17%",
+        "Anti-Mage": "CS LUL",
     }
     
     def __init__(self, name):
@@ -105,13 +113,12 @@ class DotaBot(WebHookBot):
     def get_last_match(self, player_path):
         """
         Get the last match from a given file
-        Yield a pair of strings (Match ID * Dota ID) when the match
+        Yield a pair of strings (Match ID * Dota ID * String) when the match
         differs from the cache
-        If not newer, return (None * None)
+        If not newer, return (None * None * Error String)
         """
         if not player_path.is_file():
-            self.logger("Invalid Path() given for get_last_match()")
-            return (None, None)
+            return (None, None, "Invalid Path() given for get_last_match()")
 
         # Read the player's profile file
         with open(player_path, 'r') as f:
@@ -122,37 +129,35 @@ class DotaBot(WebHookBot):
         
         # If there's no ID at all, just stop
         if not dota_id:
-            self.logger("Invalid dota ID string")
-            return (None, None)
+            return (None, None, "Invalid dota ID string")
 
         resp = get(f"{self.OPENDOTA_API}/players/{dota_id}/matches?limit=1")
         if resp.status_code != 200:
-            self.logger(f"Couldn't load matches for {dota_id}")
-            return (None, None)
+            return (None, None, f"Couldn't load matches for {dota_id}")
 
         data = resp.json()
         if not data:
-            self.logger("No matches to be found (???)")
-            return (None, None)
+            return (None, None, "No matches to be found (???)")
         
         match_id = data[0].get('match_id', 0)
         if match_id == 0:
-            self.logger("Failed to find any new matches")
-            return (None, None)
+            return (None, None, "Failed to find any new matches")
         
         if match_id != last_match:
             with open(player_path, 'w') as f:
                 data = {'dota_id': dota_id, 'last_match': match_id}
                 jdump(data, f)
-                return (match_id, dota_id)
-        return (None, None)
+                return (match_id, dota_id, "")
+        return (None, None, f"No new matches for {dota_id}")
                 
     def get_payload(self, match_id, dota_id):
-        "Craft an embed payload for the Discord endpoint"
+        """
+        Craft an embed payload for the Discord endpoint
+        Returns either a (None * Error String) or (Dictionary * Null String)
+        """
         resp = get(f"{self.OPENDOTA_API}/matches/{match_id}")
         if resp.status_code != 200:
-            self.logger("Failed to get data from OpenDota API")
-            return None
+            return (None, "Failed to get data from OpenDota API")
 
         jsonblob = resp.json()
         data     = dict()
@@ -171,8 +176,7 @@ class DotaBot(WebHookBot):
             if str(p["account_id"]) == dota_id:
                 player = p
         if player is None:
-            self.logger("Failed to find the player")
-            return None 
+            return (None, "Failed to find the player ID in the match")
 
         # Player variable declarations for use later
         k, a, d     = player['kills'], player['assists'], player['deaths']
@@ -246,14 +250,14 @@ class DotaBot(WebHookBot):
                 "text": self.JOKES2.get(hero_name, "Provided by OpenDota API")
             }
         }]
-        return data
+        return (data, "")
 
     def post_payload(self, data):
         "Send a data dict to the Discord endpoint"
         if not data:
             self.logger("Invalid payload, nothing sent")
             return False
-        re = post(self.endpoint, json=data, headers={'content-type': 'application/json'})
+        re = post(self.endpoint, json=data, headers=self.HEADERS)
         if re.status_code != 204:
             return self.logger("Failed to post match")
         return re
@@ -263,11 +267,18 @@ class DotaBot(WebHookBot):
         files = [f for f in self.filegen().iterdir() if f"{f}".endswith("dota")]
         self.logger(f"Keys: {files}")
         for keypath in files:
-            last_match, dota_id = self.get_last_match(keypath)
-            if last_match is not None:
-                self.logger("Posting match")
-                payload = self.get_payload(last_match, dota_id)
-                self.post_payload(payload)
+            self.logger("Fetching most recent match")
+            last_match, dota_id, err = self.get_last_match(keypath)
+            if last_match is None:
+                self.logger(err)
+                continue
+
+            self.logger("Posting match")
+            payload, err = self.get_payload(last_match, dota_id)
+            if payload is None:
+                self.logger(err)
+                continue
+            self.post_payload(payload)
             sleep(self.DELAY_GAP)
         self.logger("Finished looping")
 

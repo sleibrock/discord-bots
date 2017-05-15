@@ -267,6 +267,7 @@ class DotaBot(WebHookBot):
         files = [f for f in self.filegen().iterdir() if f"{f}".endswith("dota")]
         self.logger(f"Keys: {files}")
         for keypath in files:
+            sleep(self.DELAY_GAP)
             self.logger("Fetching most recent match")
             last_match, dota_id, err = self.get_last_match(keypath)
             if last_match is None:
@@ -279,7 +280,6 @@ class DotaBot(WebHookBot):
                 self.logger(err)
                 continue
             self.post_payload(payload)
-            sleep(self.DELAY_GAP)
         self.logger("Finished looping")
 
 if __name__ == "__main__":

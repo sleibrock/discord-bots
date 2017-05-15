@@ -28,7 +28,7 @@ class DumbBot(ChatBot):
         super(DumbBot, self).__init__(name)
         self.filegen = self._create_filegen("shared")
 
-    @ChatBot.action('[Command String]')
+    @ChatBot.action('<Command>')
     async def help(self, args, mobj):
         """
         Return a link to a command reference sheet
@@ -42,7 +42,7 @@ class DumbBot(ChatBot):
         output = 'Thank you for choosing Dumb Bot™ for your channel\n'
         output += 'Here are the available commands\n\n'
         for c in [f'{k}' for k in self.ACTIONS.keys()]:
-            output += f'* {c}\n {self.HELPMSGS.get(c, "")}'
+            output += f'* {c} {self.HELPMSGS.get(c, "")}\n'
         output += f'\nFor more info on each command, use \'{ChatBot.PREFIX}help command\''
         return await self.message(mobj.channel, self.pre_text(output))
 
@@ -54,7 +54,7 @@ class DumbBot(ChatBot):
         """
         return await self.set_status(" ".join(args))
         
-    @ChatBot.action('<Dota ID String')
+    @ChatBot.action('<Dota ID String>')
     async def dota(self, args, mobj):
         """
         Register a Dota ID

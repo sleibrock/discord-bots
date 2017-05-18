@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+from sys import exc_info
 import asyncio
 from time import strftime, localtime
 from pathlib import Path
@@ -234,8 +235,9 @@ class ChatBot(Bot):
 
     def event_error(self):
         "Change this for better error logging if needed"
-        async def on_error(msg, *args, **kwargs):
-            return self.logger(f"Discord error: {msg}")
+        async def on_error(evt, *args, **kwargs):
+            self.logger(f"Discord error in '{evt}''")
+            return self.logger(exc_info())
         return on_error
 
     def event_message(self):

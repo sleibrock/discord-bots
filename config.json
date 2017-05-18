@@ -13,10 +13,10 @@
             ]
         },
 	{
-	    "name": "Dota Bot",
+	    "name": "Dota2 Match Bot",
 	    "program": "python",
 	    "args": [
-		"bots/dota-bot.py"
+		"bots/d2match-bot.py"
 	    ]
 	}
     ]

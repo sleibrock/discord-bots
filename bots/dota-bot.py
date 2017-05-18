@@ -4,6 +4,13 @@
 """
 Webhook automated Dota 2 match parsing service for Discord
 
+Users can register their IDs via a chatbot and the Dota bot
+will look for local JSON files in the botdata/shared folder.
+JSON files are where Dota player IDs are stored, as well as
+the last match they played for caching. Every loop, players
+get scanned to see if they have a newer match, which will
+then update the cache file with that match ID and post
+an embed into the WebHooked channel.
 """
 
 from json import load as jload, dump as jdump

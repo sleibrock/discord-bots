@@ -6,7 +6,7 @@ import asyncio
 from time import strftime, localtime
 from pathlib import Path
 from time import sleep
-from json import load as jload
+from json import load as jload, dump as jdump
 
 from discord import Client, Game
 
@@ -216,6 +216,20 @@ class ChatBot(Bot):
         if not self.client.servers:
             self.logger(f"Join link: {discord.utils.oauth_url(self.client.user.id)}")
         return
+
+    def add_ban(self, ban_target):
+        "Add a user to the bans and dump the dict (True=Added, False=Not)"
+        if ban_target in self.BANS:
+            return False
+        self.BANS[ban_target] = True
+        with open(Path(self.BLACKLIST), 'w') as f:
+            jdump(self.BANS, f)
+        return True
+
+    def del_ban(self, ban_target):
+        "Remove a user from the bans and update the file"
+        if ban_target not in self.BANS:
+            return False
 
     def is_banned(self, userobj):
         "Return whether a user is banned or not"

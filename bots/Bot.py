@@ -200,9 +200,7 @@ class ChatBot(Bot):
         p = Path(self.BLACKLIST)
         if not p.is_file():
             return self.logger("Local blacklist not found")
-        for line in p.read_text().split("\n"):
-            BANS[line.strip()] = True
-
+        self.BANS = jload(p)
         self.logger("Initial banned users:")
         for k, v in self.BANS.items():
             self.logger(f"* {k}")

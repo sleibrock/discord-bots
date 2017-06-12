@@ -187,7 +187,8 @@ class DumbBot(ChatBot):
         Ban a user from using bot commands
         Example: !ban @Username
         """
-        self.logger("Given: {', '.join(arg)}")
+        self.logger(f"Author ID: {mobj.author.id}")
+        self.logger(f"Given: {', '.join(args)}")
         result = self.add_ban("some_thing")
         if not result:
             self.logger("User already banned")

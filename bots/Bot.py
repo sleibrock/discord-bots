@@ -142,16 +142,18 @@ class ChatBot(Bot):
     
     NOTE: when instancing, don't create more than one instance at a time
     """
-    PREFIX = "!"
-    ACTIONS = dict()
-    HELPMSGS = dict()
+    PREFIX    = "!"
+    ACTIONS   = dict()
+    HELPMSGS  = dict()
+    BLACKLIST = "blacklist"
+    BANS      = dict()
 
     # Bad words to prevent malicious searches from a host device
     BADWORDS = ["fuck", "cock", "child", "kiddy", "porn", "pron", "pr0n",
                 "masturbate", "bate", "shit", "piss", "anal", "cum", "wank"]
 
     # Change this to adjust your default status setting (loads in on_ready())
-    STATUS = "Beep bloop!"
+    STATUS    = "Beep bloop!"
 
     @staticmethod
     def action(help_msg=""):
@@ -183,6 +185,7 @@ class ChatBot(Bot):
         self.actions = dict()
         self.client = Client()
         self.token = self.read_key()
+        self._load_bans()
 
     async def message(self, channel, string):
         """
@@ -192,6 +195,19 @@ class ChatBot(Bot):
         """""
         return await self.client.send_message(channel, string)
 
+    def _load_bans(self):
+        "Load the banfile and convert it to a blacklist"
+        p = Path(self.BLACKLIST)
+        if not p.is_file():
+            return self.logger("Local blacklist not found")
+        for line in p.read_text().split("\n"):
+            BANS[line.strip()] = True
+
+        self.logger("Initial banned users:")
+        for k, v in BANS.items():
+            self.logger(f"* {k}")
+        return
+
     def display_no_servers(self):
         """
         If the bot isn't connected to any servers, show a link
@@ -200,6 +216,10 @@ class ChatBot(Bot):
         if not self.client.servers:
             self.logger(f"Join link: {discord.utils.oauth_url(self.client.user.id)}")
         return
+
+    def is_banned(self, userobj):
+        "Return whether a user is banned or not"
+        return userobj in BANS
 
     def get_last_message(self, chan, uid=None):
         """
@@ -245,6 +265,8 @@ class ChatBot(Bot):
         async def on_message(msg):
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
+            if self.is_banned("something"):
+                return
             if key in self.ACTIONS:
                 return await self.ACTIONS[key](self, args, msg)
             return

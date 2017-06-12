@@ -181,6 +181,22 @@ class DumbBot(ChatBot):
         await self.client.add_reaction(mobj, '👎')
         return
 
+    @ChatBot.action('[Users]')
+    async def ban(self, args, mobj):
+        """
+        Ban a user from using bot commands
+        Example: !ban @Username
+        """
+        self.logger("Given: {', '.join(arg)}")
+        return
+
+    async def unban(self, args, mobj):
+        """
+        Unban a user from the bot commands
+        Example: !unban @Username
+        """
+        return
+
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")
     d.run()

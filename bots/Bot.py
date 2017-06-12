@@ -210,6 +210,7 @@ class ChatBot(Bot):
     @staticmethod
     def convert_user_tag(tag_str):
         "Convert a string <@[0-9]> to [0-9] (False if invalid)"
+        self.logger(f"Given: {tag_str}")
         if not tag_str.startswith("<@") and not tag_str.endswith(">"):
             return False
         inside = tag_str[2:-1]
@@ -247,9 +248,9 @@ class ChatBot(Bot):
         "Return whether a user is banned or not"
         return userid in self.BANS
 
-    def is_admin(self, user_obj):
+    def is_admin(self, mobj):
         "Return whether user is an administrator or not"
-        return
+        return mobj.channel.permissions_for(mobj.author).administrator
 
     def get_last_message(self, chan, uid=None):
         """

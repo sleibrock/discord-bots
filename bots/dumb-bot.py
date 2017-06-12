@@ -184,9 +184,11 @@ class DumbBot(ChatBot):
     @ChatBot.action('[Users]')
     async def ban(self, args, mobj):
         """
-        Ban a user from using bot commands
+        Ban a user from using bot commands (admin required)
         Example: !ban @Username
         """
+        if not self.is_admin(mobj):
+            return await self.message(mobj.channel, "Admin permissions needed")
         bancount = 0
         ids = [self.convert_user_tag(x) for x in args]
         for uid in ids:
@@ -199,9 +201,11 @@ class DumbBot(ChatBot):
     @ChatBot.action('[Users]')
     async def unban(self, args, mobj):
         """
-        Unban a user from the bot commands
+        Unban a user from the bot commands (admin required)
         Example: !unban @Username
         """
+        if not self.is_admin(mobj):
+            return await self.message(mobj.channel, "Admin permissions needed")
         return
 
 if __name__ == "__main__":

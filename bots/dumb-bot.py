@@ -146,31 +146,6 @@ class DumbBot(ChatBot):
         y = args * randint(5, 20)
         return await self.message(mobj.channel, f"{' '.join(y)}")
 
-    @ChatBot.action()
-    async def pasta(self, args, mobj):
-        """
-        Fetch a random Twitch quote (service subject to change at random)
-        Example: !pasta
-        """
-        url = "https://www.twitchquotes.com/random"
-        resp = get(url)
-        if resp.status_code != 200:
-            return await self.message(mobj.channel, "Failed to copypasta")
-        
-        # quote_clipboard_copy_content_
-        bs = BS(resp.text, 'html.parser')
-        result = bs.find('div', id='quote_clipboard_copy_content_')
-        if not result:
-            return await self.message(mobj.channel, 'Couldn\'t get data (no div found)')
-
-        # replace all emotes available in the result with Discord emotes
-        t = result.text
-        emojis = self.get_emojis(mobj)
-        ed = {x.name:str(x) for x in emojis}
-        for k, v in ed.items():
-            t.replace(k, v)
-        return await self.message(mobj.channel, t)
-
     @ChatBot.action('<Poll Query>')
     async def poll(self, args, mobj):
         """

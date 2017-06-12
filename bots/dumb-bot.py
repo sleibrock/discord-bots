@@ -187,8 +187,14 @@ class DumbBot(ChatBot):
         Ban a user from using bot commands
         Example: !ban @Username
         """
+        p = Path(self.BLACKLIST)
+        lines = []
+        if p.is_file():
+            lines = p.read_text().split("\n")
+        lines.append("user_id_string")
+        p.write_text("\n".join(lines))
         self.logger("Given: {', '.join(arg)}")
-        return
+        return #await self.message(mobj.channel, "User has been banned")
 
     async def unban(self, args, mobj):
         """

@@ -204,7 +204,7 @@ class ChatBot(Bot):
             BANS[line.strip()] = True
 
         self.logger("Initial banned users:")
-        for k, v in BANS.items():
+        for k, v in self.BANS.items():
             self.logger(f"* {k}")
         return
 
@@ -219,7 +219,7 @@ class ChatBot(Bot):
 
     def is_banned(self, userobj):
         "Return whether a user is banned or not"
-        return userobj in BANS
+        return userobj in self.BANS
 
     def get_last_message(self, chan, uid=None):
         """

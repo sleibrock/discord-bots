@@ -209,11 +209,11 @@ class ChatBot(Bot):
 
     @staticmethod
     def convert_user_tag(tag_str):
-        "Convert a string <@[0-9]> to [0-9] (False if invalid)"
-        self.logger(f"Given: {tag_str}")
+        "Convert a string <@(?){0,1}[0-9]> to [0-9] (False if invalid)"
+        print(f"Given: {tag_str}")
         if not tag_str.startswith("<@") and not tag_str.endswith(">"):
             return False
-        inside = tag_str[2:-1]
+        inside = tag_str[(3 if tag_str.startswith("<@!") else 2):-1]
         if not inside.isnumeric():
             return False
         return inside
@@ -231,9 +231,7 @@ class ChatBot(Bot):
         "Add a user to the bans and dump the dict (True=Added, False=Not)"
         if ban_target in self.BANS:
             return False
-        self.logger(f"Bans before: {self.BANS}")
         self.BANS[ban_target] = True
-        self.logger(f"Bans after: {self.BANS}")
         with open(Path(self.BLACKLIST), 'w') as f:
             jdump(self.BANS, f)
         return True
@@ -248,7 +246,8 @@ class ChatBot(Bot):
         "Return whether a user is banned or not"
         return userid in self.BANS
 
-    def is_admin(self, mobj):
+    @staticmethod
+    def is_admin(mobj):
         "Return whether user is an administrator or not"
         return mobj.channel.permissions_for(mobj.author).administrator
 
@@ -297,7 +296,7 @@ class ChatBot(Bot):
             self.logger(f"Current bans: {self.BANS}")
             if self.is_banned(msg.author.id):
                 self.logger("Banned user requested a command")
-                return
+                return await self.client.delete_message(msg)
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:

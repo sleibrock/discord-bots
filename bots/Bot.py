@@ -200,11 +200,22 @@ class ChatBot(Bot):
         p = Path(self.BLACKLIST)
         if not p.is_file():
             return self.logger("Local blacklist not found")
-        self.BANS = jload(p)
+        with open(p, 'r') as f:
+            self.BANS = jload(f)
         self.logger("Initial banned users:")
         for k, v in self.BANS.items():
             self.logger(f"* {k}")
         return
+
+    @staticmethod
+    def convert_user_tag(tag_str):
+        "Convert a string <@[0-9]> to [0-9] (False if invalid)"
+        if not tag_str.startswith("<@") and not tag_str.endswith(">"):
+            return False
+        inside = tag_str[2:-1]
+        if not inside.isnumeric():
+            return False
+        return inside
 
     def display_no_servers(self):
         """
@@ -219,7 +230,9 @@ class ChatBot(Bot):
         "Add a user to the bans and dump the dict (True=Added, False=Not)"
         if ban_target in self.BANS:
             return False
+        self.logger(f"Bans before: {self.BANS}")
         self.BANS[ban_target] = True
+        self.logger(f"Bans after: {self.BANS}")
         with open(Path(self.BLACKLIST), 'w') as f:
             jdump(self.BANS, f)
         return True
@@ -228,10 +241,15 @@ class ChatBot(Bot):
         "Remove a user from the bans and update the file"
         if ban_target not in self.BANS:
             return False
+        return
 
-    def is_banned(self, userobj):
+    def is_banned(self, userid):
         "Return whether a user is banned or not"
-        return userobj in self.BANS
+        return userid in self.BANS
+
+    def is_admin(self, user_obj):
+        "Return whether user is an administrator or not"
+        return
 
     def get_last_message(self, chan, uid=None):
         """
@@ -275,10 +293,12 @@ class ChatBot(Bot):
     def event_message(self):
         "Change this to change overall on message behavior"
         async def on_message(msg):
+            self.logger(f"Current bans: {self.BANS}")
+            if self.is_banned(msg.author.id):
+                self.logger("Banned user requested a command")
+                return
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
-            if self.is_banned("something"):
-                return
             if key in self.ACTIONS:
                 return await self.ACTIONS[key](self, args, msg)
             return

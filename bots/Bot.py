@@ -294,12 +294,12 @@ class ChatBot(Bot):
         "Change this to change overall on message behavior"
         async def on_message(msg):
             self.logger(f"Current bans: {self.BANS}")
-            if self.is_banned(msg.author.id):
-                self.logger("Banned user requested a command")
-                return await self.client.delete_message(msg)
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:
+                if self.is_banned(msg.author.id):
+                    self.logger("Banned user attempted command")
+                    return await self.client.delete_message(msg)
                 return await self.ACTIONS[key](self, args, msg)
             return
         return on_message
@@ -323,13 +323,13 @@ class ChatBot(Bot):
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self.client.start(self.token))
         except Exception as e:
-            print(f"Caught an exception: {e}")
+            print(f"\nCaught an exception: {e}")
         except SystemExit:
-            print("System Exit signal")
+            print("\nSystem Exit signal")
         except KeyboardInterrupt:
-            print("Keyboard Interrupt signal")
+            print("\nKeyboard Interrupt signal")
         finally:
-            print(f"{self.name} quitting")
+            print(f"\n{self.name} quitting")
             loop.run_until_complete(self.client.logout())
             loop.stop()
             loop.close()

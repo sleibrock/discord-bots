@@ -240,7 +240,10 @@ class ChatBot(Bot):
         "Remove a user from the bans and update the file"
         if ban_target not in self.BANS:
             return False
-        return
+        self.bans.pop(ban_target)
+        with open(Path(self.BLACKLIST), 'w') as f:
+            jdump(self.BANS, f)
+        return True
 
     def is_banned(self, userid):
         "Return whether a user is banned or not"
@@ -280,7 +283,7 @@ class ChatBot(Bot):
         async def on_ready():
             self.display_no_servers()
             await self.set_status(self.STATUS)
-            return self.logger(f"Connection status: {self.client.is_logged_in}")
+            return self.logger(f"Bot online, {len(self.ACTIONS)} commands loaded")
         return on_ready
 
     def event_error(self):
@@ -293,7 +296,6 @@ class ChatBot(Bot):
     def event_message(self):
         "Change this to change overall on message behavior"
         async def on_message(msg):
-            self.logger(f"Current bans: {self.BANS}")
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:
@@ -323,13 +325,14 @@ class ChatBot(Bot):
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self.client.start(self.token))
         except Exception as e:
-            print(f"\nCaught an exception: {e}")
+            self.logger(f"Caught an exception: {e}")
         except SystemExit:
-            print("\nSystem Exit signal")
+            self.logger(f"System Exit signal")
+            print("System Exit signal")
         except KeyboardInterrupt:
-            print("\nKeyboard Interrupt signal")
+            self.logger("Keyboard interrupt signal")
         finally:
-            print(f"\n{self.name} quitting")
+            self.logger(f"{self.name} quitting")
             loop.run_until_complete(self.client.logout())
             loop.stop()
             loop.close()

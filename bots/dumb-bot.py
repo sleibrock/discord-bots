@@ -18,6 +18,7 @@ class DumbBot(ChatBot):
     """
 
     STATUS = "I'm a bot, Beep Bloop!"
+    GIT_URL = "https://github.com/sleibrock/discord-bots"
 
     # Used to convert chars to emojis for /roll
     emojis = {f"{i}":x for i, x in enumerate([f":{x}:" for x in
@@ -35,15 +36,20 @@ class DumbBot(ChatBot):
         If you came here from !help help, you're out of luck
         """
         if args:
-            key = f'{ChatBot.PREFIX}{args[0]}'
+            key = args[0]
+            if not args[0].startswith(ChatBot.PREFIX):
+                key = f'{ChatBot.PREFIX}{args[0]}'
             if key in self.ACTIONS:
                 t = self.pre_text(f'Help for \'{key}\':{self.ACTIONS[key].__doc__}')
                 return await self.message(mobj.channel, t)
+        keys = [f'{k}' for k in self.ACTIONS.keys()]
+        longest = max((len(s) for s in keys)) + 2
         output = 'Thank you for choosing Dumb Bot™ for your channel\n'
         output += 'Here are the available commands\n\n'
-        for c in [f'{k}' for k in self.ACTIONS.keys()]:
-            output += f'* {c} {self.HELPMSGS.get(c, "")}\n'
-        output += f'\nFor more info on each command, use \'{ChatBot.PREFIX}help command\''
+        for c in keys:
+            output += f'* {c.ljust(longest)} {self.HELPMSGS.get(c, "")}\n'
+        output += f'\nFor more info on each command, use \'{ChatBot.PREFIX}help <command>\''
+        output += f'\nVisit {self.GIT_URL} for more info'
         return await self.message(mobj.channel, self.pre_text(output))
 
     @ChatBot.action('<Status String>')
@@ -53,7 +59,7 @@ class DumbBot(ChatBot):
         Example: !status haha ur dumb
         """
         return await self.set_status(" ".join(args))
-        
+
     @ChatBot.action('<Dota ID String>')
     async def dota(self, args, mobj):
         """
@@ -160,7 +166,7 @@ class DumbBot(ChatBot):
     async def ban(self, args, mobj):
         """
         Ban a user from using bot commands (admin required)
-        Example: !ban @Username
+        Example: !ban @Username @Username2 ...
         """
         if not self.is_admin(mobj):
             return await self.message(mobj.channel, "Admin permissions needed")
@@ -169,19 +175,43 @@ class DumbBot(ChatBot):
         for uid in ids:
             if uid is not False:
                 r = self.add_ban(uid)
-                if r:
-                    bancount += 1
+                bancount += 1 if r else 0
         return await self.message(mobj.channel, f"{bancount} users banned")
 
     @ChatBot.action('[Users]')
     async def unban(self, args, mobj):
         """
         Unban a user from the bot commands (admin required)
-        Example: !unban @Username
+        Example: !unban @Username @Username2 ...
         """
         if not self.is_admin(mobj):
             return await self.message(mobj.channel, "Admin permissions needed")
-        return
+        unbanc = 0
+        ids = [self.convert_user_tag(x) for x in args]
+        for uid in ids:
+            if uid is not False:
+                r = self.del_ban(uid)
+                unbanc += 1 if r else 0
+        return await self.message(mobj.channel, f"{unbanc} users unbanned")
+
+    @ChatBot.action()
+    async def botinfo(self, args, mobj):
+        """
+        Print out debug information about the bot (admin required)
+        Example: !botinfo
+        """
+        if not self.is_admin(mobj):
+            return await self.message(mobj.channel, "Admin permissions needed")
+        lines = []
+
+        with open(".git/refs/heads/master") as f:
+            head_hash = f.read()[:-1]
+        lines.append(f"Name: {self.name}")
+        lines.append(f"Total actions: {len(self.ACTIONS)}")
+        lines.append(f"Ban count: {len(self.BANS)}")
+        lines.append(f"Verion number: #{head_hash[:7]}")
+        lines.append(f"Commit URL: {self.GIT_URL}/commit/{head_hash}")
+        return await self.message(mobj.channel, "```{}```".format("\n".join(lines)))
 
 if __name__ == "__main__":
     d = DumbBot("dumb-bot")

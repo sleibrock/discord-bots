@@ -34,7 +34,7 @@ class DotaBot(WebHookBot):
     HERO_FILE = "heroes.json"
     HEADERS = {
         'Content-Type': 'application/json',
-        'User-Agent':   'Dota 2 scraper bot, contact steven.leibrock@gmail.com',
+        'User-Agent':   'Dota 2 scraper bot, contact steven(dot)leibrock(at)gmail(dot)com',
     }
 
     JOKES1 = {
@@ -51,23 +51,25 @@ class DotaBot(WebHookBot):
         "Tidehunter":       "Sheever",
         "Storm Spirit":     "Blitz Spirit",
         "Spirit Breaker":   "Space Cow",
+        "Vengeful Spirit":  "Vengeful Chicken",
+        "Monkey King":      "Mankey Kang",
     }
 
     JOKES2 = {
-        "Wraith King": "DEATH IS MY BITCH",
-        "Ogre Magi": "4 X M U L T I C A S T",
-        "Skywrath Mage": "From the Ghastly Eeyrie...",
-        "Kunkka": "No room to swing a cat in this crowd",
-        "Puck": "Do you remember the million dollar dream carl?",
+        "Wraith King":      "DEATH IS MY BITCH",
+        "Ogre Magi":        "c00s GOD",
+        "Skywrath Mage":    "From the Ghastly Eeyrie...",
+        "Kunkka":           "No room to swing a cat in this crowd",
+        "Puck":             "Do you remember the million dollar dream carl?",
         "Legion Commander": "FIGHT ME",
-        "Venomancer": "Snek Pass",
-        "Lycan": "WOOF WOOF",
-        "Monkey King": "SKE-DOOSH",
-        "Shadow Shaman": "MY ANCESTORS",
+        "Venomancer":       "With Vim and Venom",
+        "Lycan":            "WOOF WOOF",
+        "Monkey King":      "SKE-DOOSH",
+        "Shadow Shaman":    "MY ANCESTORS",
         "Nature's Prophet": "+4 Treants",
-        "Undying": "Left 4 Dead",
-        "Spirit Breaker": "17%",
-        "Anti-Mage": "CS LUL",
+        "Undying":          "Left 4 Dead",
+        "Spirit Breaker":   "17%",
+        "Anti-Mage":        "CS LUL",
     }
     
     def __init__(self, name):
@@ -131,7 +133,7 @@ class DotaBot(WebHookBot):
         with open(player_path, 'r') as f:
             player_data = jload(f)
         
-        dota_id = player_data.get('dota_id', "")
+        dota_id    = player_data.get('dota_id', "")
         last_match = player_data.get('last_match', 0)
         
         # If there's no ID at all, just stop
@@ -192,17 +194,20 @@ class DotaBot(WebHookBot):
         hero_name   = self.find_hero(player["hero_id"])
         
         # Score of game
+        wlt = ["Radiant", "~~Dire~~"]  # use strikethrough to show who lost
+        if not radiant_win:
+            wlt = ["~~Radiant~~", "Dire"]
         embs.append({
-            "name": "Final Score",
-            "value": f"Radiant **{scores[0]}** - **{scores[1]}** Dire",
+            "name"  : "Final Score",
+            "value" : f"{wlt[0]} **{scores[0]}** - **{scores[1]}** {wlt[1]}",
             "inline": True
         })
     
         # Player Stats field
         pt = self.percent(k, a, scores[0 if team else 1])
         embs.append({
-            "name": "Stats (KDA)",
-            "value": f"{k}/{d}/{a} ({pt}% of team)",
+            "name"  : "Stats (KDA)",
+            "value" : f"{k}/{d}/{a} ({pt}% of team)",
             "inline": True
         })
         
@@ -214,11 +219,12 @@ class DotaBot(WebHookBot):
         # ping details
         pings = player.get('pings', None)
         if pings is not None:
-            tp = sum([p.get('pings', 0) for p in players if p["isRadiant"] == team])
+            tp = sum([p.get('pings', 0) for p in players
+                      if p.get("isRadiant") == team])
             pingpc = self.percent(pings, 0, tp)
             embs.append({
-                "name": "Total Pings",
-                "value": f"{player.get('pings', 0)} ({pingpc}% of team)",
+                "name"  : "Total Pings",
+                "value" : f"{player.get('pings', 0)} ({pingpc}% of team)",
                 "inline": True
             })
 
@@ -228,19 +234,20 @@ class DotaBot(WebHookBot):
             total_bounties = sum([p['runes'].get('5', 0) for p in players])
             bountypc = self.percent(runes.get('5', 0), 0, total_bounties)
             embs.append({
-                "name": "Bounties Collected",
-                "value": f"{runes.get('5', 0)} ({bountypc}% of game)",
+                "name"  : "Bounties Collected",
+                "value" : f"{runes.get('5', 0)} ({bountypc}% of game)",
                 "inline": True
             })
 
         # Fetch a random quote from the match
         chat = jsonblob.get('chat', None)
         if chat is not None:
-            user_lines = [l['key'] for l in chat if l['unit'] == pname]
+            user_lines = [l.get('key', '') for l in chat
+                          if l.get('unit', '') == pname]
             if user_lines:
                 embs.append({
-                    "name": "Random Quote",
-                    "value": f"*{choice(user_lines)}* -{pname}",
+                    "name"  : "Random Quote",
+                    "value" : f"*{choice(user_lines)}* -{pname}",
                     "inline": True
                 })
         
@@ -248,11 +255,11 @@ class DotaBot(WebHookBot):
         hname = self.JOKES1.get(hero_name, hero_name)
         winstatus = "won" if team is radiant_win else "lost"
         data["embeds"] = [{
-            "title": f"Results for Match #{match_id}",
+            "title"      : f"Results for Match #{match_id}",
             "description": f"{pname} {winstatus} as {hname} ({duration})",
-            "url": f"{self.OPENDOTA_URL}/{match_id}",
-            "color": match_id % 0xffffff,
-            "fields": embs,
+            "url"        : f"{self.OPENDOTA_URL}/{match_id}",
+            "color"      : match_id % 0xffffff,
+            "fields"     : embs,
             "footer": {
                 "text": self.JOKES2.get(hero_name, "Provided by OpenDota API")
             }

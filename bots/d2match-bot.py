@@ -267,7 +267,7 @@ class DotaBot(WebHookBot):
         data["embeds"] = [{
             "title"      : f"Results for Match #{match_id}",
             "description": f"{pname} {winstatus} as {hname} ({duration})",
-            "url"        : f"{self.OPENDOTA_URL}/{match_id}",
+            "url"        : f"{self.match_url}/{match_id}",
             "color"      : match_id % 0xffffff,
             "fields"     : embs,
             "footer": {

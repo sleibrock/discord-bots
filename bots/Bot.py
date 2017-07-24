@@ -114,21 +114,24 @@ class Bot(object):
 
     # Instance methods go below __init__()
     def __init__(self, name):
-        self.name = name
-        self.logger = self._create_logger(self.name)
+        self.name    = name
+        self.logger  = self._create_logger(self.name)
+        self.keydata = self.load_keyfile()
+
+    def load_keyfile(self):
+        "Read a keyfile dictionary and store it to the bot's locals"
+        with open(Path(self.KEY_FOLDER, f'{self.name}.key'), 'r') as f:
+            return jload(f)
+        return None
 
     def read_key(self):
-        """
-        Read a bot's key JSON to get it's token/webhook link
-        Keys must be stored in the key folder and have a basic 'key':'<keytext>' object
-        """
-        with open(Path(self.KEY_FOLDER, f'{self.name}.key'), 'r') as f:
-            datum = jload(f)
-            key = datum.get("key", "")
-            if not key:
-                raise IOError("Key not found in JSON keyfile")
-            return key
-        return None
+        "Fetch the key from the keydata local"
+        key = self.keydata.get("key", "")
+        if not key:
+            raise IOError("Key not found in JSON keyfile")
+        return key
+
+    # end Bot class
 
 class ChatBot(Bot):
     """
@@ -140,7 +143,7 @@ class ChatBot(Bot):
     inside of a local "keys" folder. The "keys" folder is at the root of the 
     project, not inside the Bot Data folder
     
-    NOTE: when instancing, don't create more than one instance at a time
+    TODO: add a Singleton pattern to prevent creating more than one bot instance
     """
     PREFIX    = "!"
     ACTIONS   = dict()
@@ -166,7 +169,7 @@ class ChatBot(Bot):
             if callable(function):
                 if function.__name__ not in ChatBot.ACTIONS:
                     fname = f'{ChatBot.PREFIX}{function.__name__}'
-                    ChatBot.ACTIONS[fname] = function
+                    ChatBot.ACTIONS[fname]  = function
                     ChatBot.HELPMSGS[fname] = help_msg.strip()
                     return True
             return function
@@ -179,12 +182,31 @@ class ChatBot(Bot):
             return msg_obj.server.emojis
         return list()
 
+    @staticmethod
+    def convert_user_tag(tag_str):
+        "Convert a string <@(?){0,1}[0-9]> to [0-9] (False if invalid)"
+        print(f"Given: {tag_str}")
+        if not tag_str.startswith("<@") and not tag_str.endswith(">"):
+            return False
+        inside = tag_str[(3 if tag_str.startswith("<@!") else 2):-1]
+        if not inside.isnumeric():
+            return False
+        return inside
+
+    @staticmethod
+    def is_admin(mobj):
+        "Return whether user is an administrator or not"
+        return mobj.channel.permissions_for(mobj.author).administrator
+
+
     # Instance methods below
     def __init__(self, name):
         super(ChatBot, self).__init__(name)
-        self.actions = dict()
-        self.client = Client()
-        self.token = self.read_key()
+        self.actions  = dict()
+        self.client   = Client()
+        self.token    = self.read_key()
+
+        # load up the ban list
         self._load_bans()
 
     async def message(self, channel, string):
@@ -192,7 +214,7 @@ class ChatBot(Bot):
         Shorthand version of client.send_message
         So that we don't have to arbitrarily type 
         'self.client.send_message' all the time
-        """""
+        """
         return await self.client.send_message(channel, string)
 
     def _load_bans(self):
@@ -206,17 +228,6 @@ class ChatBot(Bot):
         for k, v in self.BANS.items():
             self.logger(f"* {k}")
         return
-
-    @staticmethod
-    def convert_user_tag(tag_str):
-        "Convert a string <@(?){0,1}[0-9]> to [0-9] (False if invalid)"
-        print(f"Given: {tag_str}")
-        if not tag_str.startswith("<@") and not tag_str.endswith(">"):
-            return False
-        inside = tag_str[(3 if tag_str.startswith("<@!") else 2):-1]
-        if not inside.isnumeric():
-            return False
-        return inside
 
     def display_no_servers(self):
         """
@@ -248,11 +259,6 @@ class ChatBot(Bot):
     def is_banned(self, userid):
         "Return whether a user is banned or not"
         return userid in self.BANS
-
-    @staticmethod
-    def is_admin(mobj):
-        "Return whether user is an administrator or not"
-        return mobj.channel.permissions_for(mobj.author).administrator
 
     def get_last_message(self, chan, uid=None):
         """
@@ -301,7 +307,8 @@ class ChatBot(Bot):
             if key in self.ACTIONS:
                 if self.is_banned(msg.author.id):
                     self.logger("Banned user attempted command")
-                    return await self.client.delete_message(msg)
+                    if self.keydata.get("delete_banned_user_coms", False):
+                        return await self.client.delete_message(msg)
                 return await self.ACTIONS[key](self, args, msg)
             return
         return on_message

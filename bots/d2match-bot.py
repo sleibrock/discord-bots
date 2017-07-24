@@ -77,8 +77,18 @@ class DotaBot(WebHookBot):
         self.heroes     = list()
         self.filegen    = self._create_filegen("shared")
         self.herojson   = self.filegen(self.HERO_FILE)
+        self.match_url  = self._load_match_url()
         self.SLEEP_TIME = 60 * 60 # refresh every hour
+
+        # Prefab the hero data via http GET or local file
         self._load_hero_data()
+
+    def _load_match_url(self):
+        "Load up a match URL from the key settings"
+        url = self.keydata.get("match_url", self.OPENDOTA_URL)
+        if not url.startswith("http"):
+            raise IOError("Invalid key given for 'match_url': not http(s)")
+        return url
 
     def _load_hero_data(self, force=False):
         "Prefetch the Hero JSON from OpenDota"

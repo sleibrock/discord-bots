@@ -262,13 +262,14 @@ class DotaBot(WebHookBot):
                 })
         
         # craft the main embed
-        hname = self.JOKES1.get(hero_name, hero_name)
-        winstatus = "won" if team is radiant_win else "lost"
+        hname       = self.JOKES1.get(hero_name, hero_name)
+        winstatus   = "won" if team is radiant_win else "lost"
+        match_color = 0x92A525 if win else 0xC23C2A
         data["embeds"] = [{
             "title"      : f"Results for Match #{match_id}",
             "description": f"{pname} {winstatus} as {hname} ({duration})",
             "url"        : f"{self.match_url}/{match_id}",
-            "color"      : match_id % 0xffffff,
+            "color"      : match_color,
             "fields"     : embs,
             "footer": {
                 "text": self.JOKES2.get(hero_name, "Provided by OpenDota API")

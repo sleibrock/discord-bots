@@ -20,7 +20,7 @@ class DumbBot(ChatBot):
     STATUS = "I'm a bot, Beep Bloop!"
     GIT_URL = "https://github.com/sleibrock/discord-bots"
 
-    # Used to convert chars to emojis for /roll
+    # Used to convert chars to emojis for self.roll()
     emojis = {f"{i}":x for i, x in enumerate([f":{x}:" for x in
         ("zero", "one", "two", "three", "four", 
          "five", "six", "seven", "eight", "nine")])}
@@ -197,20 +197,22 @@ class DumbBot(ChatBot):
     @ChatBot.action()
     async def botinfo(self, args, mobj):
         """
-        Print out debug information about the bot (admin required)
+        Print out debug information about the bot
         Example: !botinfo
         """
-        if not self.is_admin(mobj):
-            return await self.message(mobj.channel, "Admin permissions needed")
         lines = []
 
         with open(".git/refs/heads/master") as f:
             head_hash = f.read()[:-1]
-        lines.append(f"Name: {self.name}")
-        lines.append(f"Total actions: {len(self.ACTIONS)}")
-        lines.append(f"Ban count: {len(self.BANS)}")
-        lines.append(f"Verion number: #{head_hash[:7]}")
-        lines.append(f"Commit URL: {self.GIT_URL}/commit/{head_hash}")
+
+        # All the lines used in the output
+        lines = [
+            f"Name: {self.name}",
+            f"Actions loaded: {len(self.ACTIONS)}",
+            f"Ban count: {len(self.BANS)}",
+            f"Commit version: #{head_hash[:7]}",
+            f"Commit URL: {self.GIT_URL}/commit/{head_hash}"
+        ]
         return await self.message(mobj.channel, "```{}```".format("\n".join(lines)))
 
 if __name__ == "__main__":

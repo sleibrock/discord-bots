@@ -20,6 +20,9 @@ class DumbBot(ChatBot):
     STATUS = "I'm a bot, Beep Bloop!"
     GIT_URL = "https://github.com/sleibrock/discord-bots"
 
+    # Other strings
+    YOUTUBE_URL = "https://www.youtube.com"
+
     # Used to convert chars to emojis for self.roll()
     emojis = {f"{i}":x for i, x in enumerate([f":{x}:" for x in
         ("zero", "one", "two", "three", "four", 
@@ -63,7 +66,7 @@ class DumbBot(ChatBot):
     @ChatBot.action('<Dota ID String>')
     async def dota(self, args, mobj):
         """
-        Register a Dota ID
+        Register a Dota ID (enable your profile as Public!)
         Example: !dota 40281889
         """
         p = self.filegen(f"{mobj.author.id}.dota")
@@ -119,8 +122,7 @@ class DumbBot(ChatBot):
         if not args:
             return await self.message(mobj.channel, "Empty search terms")
         
-        tube = "https://www.youtube.com"
-        resp = get(f"{tube}/results?search_query={self.replace(' '.join(args))}")
+        resp = get(f"{self.YOUTUBE_URL}/results?search_query={self.replace(' '.join(args))}")
         if resp.status_code != 200:
             return await self.message(mobj.channel, "Failed to retrieve search")
 
@@ -138,7 +140,7 @@ class DumbBot(ChatBot):
         for container in items:
             href = container.find('a', class_='yt-uix-sessionlink')['href']
             if href.startswith('/watch'):
-                return await self.message(mobj.channel, f'{tube}{href}')        
+                return await self.message(mobj.channel, f'{self.YOUTUBE_URL}{href}')
         return await self.message(mobj.channel, "No YouTube video found")
 
     @ChatBot.action('[String]')

@@ -12,12 +12,19 @@
                 "bots/dumb-bot.py"
             ]
         },
-	    {
-	        "name": "Dota2 Match Bot",
-	        "program": "python",
-	        "args": [
-		        "bots/d2match-bot.py"
-	        ]
-	    }
+	{
+	    "name": "Dota2 Match Bot",
+	    "program": "python",
+	    "args": [
+		"bots/d2match-bot.py"
+	    ]
+	},
+	{
+	    "name": "Economy Bot",
+	    "program": "python",
+	    "args": [
+		"bots/eco-bot.py"
+	    ]
+	}
     ]
 }

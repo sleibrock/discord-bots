@@ -28,48 +28,40 @@ class DotaBot(WebHookBot):
     (or perhaps, even on a website?)
     """
 
-    DELAY_GAP = 60
+    DELAY_GAP    = 60
     OPENDOTA_API = "https://api.opendota.com/api"
     OPENDOTA_URL = "https://opendota.com/matches"
-    HERO_FILE = "heroes.json"
-    HEADERS = {
+    HERO_FILE    = "heroes.json"
+    HEADERS      = {
         'Content-Type': 'application/json',
         'User-Agent':   'Dota 2 scraper bot, contact steven(dot)leibrock(at)gmail(dot)com',
     }
 
     JOKES1 = {
-        "Wraith King":      "SKELETON KING",
-        "Queen of Pain":    "s4 Cop",
-        "Leshrac":          "Shrack",
-        "Bristleback":      "Bristlebutt",
-        "Nature's Prophet": "Admiral Bulldog",
-        "Pudge":            "Dendi",
-        "Phoenix":          "Firequacker",
-        "Tiny":             "Tony",
         "Io":               "Wisp",
-        "Omniknight":       "Sir Action Slacks",
-        "Tidehunter":       "Sheever",
-        "Storm Spirit":     "Blitz Spirit",
+        "Tiny":             "Tony",
+        "Phoenix":          "Firequacker",
+        "Leshrac":          "Shrack",
+        "Monkey King":      "Donkey Kong",
+        "Bristleback":      "Bristlebutt",
+        "Wraith King":      "Skeleton King",
+        "Faceless Void":    "Maceless Void",
         "Spirit Breaker":   "Space Cow",
-        "Vengeful Spirit":  "Vengeful Chicken",
-        "Monkey King":      "Mankey Kang",
     }
 
     JOKES2 = {
-        "Wraith King":      "DEATH IS MY BITCH",
-        "Ogre Magi":        "c00s GOD",
-        "Skywrath Mage":    "From the Ghastly Eeyrie...",
+        "Sniper":           "Snipin's a good job mate",
         "Kunkka":           "No room to swing a cat in this crowd",
-        "Puck":             "Do you remember the million dollar dream carl?",
-        "Legion Commander": "FIGHT ME",
-        "Venomancer":       "With Vim and Venom",
-        "Lycan":            "WOOF WOOF",
-        "Monkey King":      "SKE-DOOSH",
-        "Shadow Shaman":    "MY ANCESTORS",
-        "Nature's Prophet": "+4 Treants",
         "Undying":          "Left 4 Dead",
-        "Spirit Breaker":   "17%",
-        "Anti-Mage":        "CS LUL",
+        "Venomancer":       "With Vim and Venom",
+        "Wraith King":      "DEATH IS MY BITCH",
+        "Shadow Shaman":    "MY ANCESTORS",
+        "Skywrath Mage":    "From the Ghastly Eeyrie...",
+        "Faceless Void":    "Now we meet, mace to face",
+        "Crystal Maiden":   "Swift as the wolves of Icewrack",
+        "Spirit Breaker":   "MoooooooOooOOOOOOOOOOOoooooooo",
+        "Legion Commander": "FIGHT ME",
+        "Nature's Prophet": "Nature's Wrath",
     }
     
     def __init__(self, name):
@@ -82,6 +74,7 @@ class DotaBot(WebHookBot):
 
         # Prefab the hero data via http GET or local file
         self._load_hero_data()
+        self.logger(f"Heroes loaded: {len(self.heroes)}")
 
     def _load_match_url(self):
         "Load up a match URL from the key settings"
@@ -262,9 +255,10 @@ class DotaBot(WebHookBot):
                 })
         
         # craft the main embed
+        player_won  = team is radiant_win
         hname       = self.JOKES1.get(hero_name, hero_name)
-        winstatus   = "won" if team is radiant_win else "lost"
-        match_color = 0x92A525 if win else 0xC23C2A
+        winstatus   = "won" if player_won else "lost"
+        match_color = 0x92A525 if player_won else 0xC23C2A
         data["embeds"] = [{
             "title"      : f"Results for Match #{match_id}",
             "description": f"{pname} {winstatus} as {hname} ({duration})",
@@ -288,7 +282,7 @@ class DotaBot(WebHookBot):
         return re
 
     def main(self):
-        self.logger(f"Heroes loaded: {len(self.heroes)}")
+        "Main Dota 2 match loop"
         files = [f for f in self.filegen().iterdir() if f"{f}".endswith("dota")]
         self.logger(f"Keys: {files}")
         for keypath in files:
@@ -308,6 +302,6 @@ class DotaBot(WebHookBot):
         self.logger("Finished looping")
 
 if __name__ == "__main__":
-    bot = DotaBot("dota-bot")
-    bot.run()
+    DotaBot("dota-bot").run()
+    pass
 # end

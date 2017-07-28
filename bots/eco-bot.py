@@ -76,8 +76,7 @@ class EcoBot(ChatBot):
     # end bot def
 
 if __name__ == '__main__':
-    d = EcoBot('eco-bot')
-    d.run()
+    ECoBot('eco-bot').run()
     pass
     
 # end

@@ -9,6 +9,7 @@ from time import sleep
 from json import load as jload, dump as jdump
 
 from discord import Client, Game
+from discord.utils import oauth_url
 
 """
 The new and improved class-based Bot library
@@ -302,6 +303,8 @@ class ChatBot(Bot):
     def event_message(self):
         "Change this to change overall on message behavior"
         async def on_message(msg):
+            if self.has_badwords(msg):
+                return
             args = msg.content.strip().split(" ")
             key = args.pop(0).lower() # messages sent can't be empty
             if key in self.ACTIONS:

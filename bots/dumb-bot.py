@@ -204,22 +204,21 @@ class DumbBot(ChatBot):
         """
         lines = []
 
-        with open(".git/refs/heads/master") as f:
+        with open('.git/refs/heads/master') as f:
             head_hash = f.read()[:-1]
 
         # All the lines used in the output
         lines = [
-            f"Name: {self.name}",
-            f"Actions loaded: {len(self.ACTIONS)}",
-            f"Ban count: {len(self.BANS)}",
-            f"Commit version: #{head_hash[:7]}",
-            f"Commit URL: {self.GIT_URL}/commit/{head_hash}"
+            f'Name: {self.name}',
+            f'Actions loaded: {len(self.ACTIONS)}',
+            f'Ban count: {len(self.BANS)}',
+            f'Commit version: #{head_hash[:7]}'
+            f'Commit URL: {self.GIT_URL}/commit/{head_hash}'
         ]
-        return await self.message(mobj.channel, "```{}```".format("\n".join(lines)))
+        return await self.message(mobj.channel, '```{}```'.format('\n'.join(lines)))
 
-if __name__ == "__main__":
-    d = DumbBot("dumb-bot")
-    d.run()
+if __name__ == '__main__':
+    DumbBot('dumb-bot').run()
     pass
 
 # end

@@ -303,10 +303,11 @@ class ChatBot(Bot):
     def event_message(self):
         "Change this to change overall on message behavior"
         async def on_message(msg):
-            if self.has_badwords(msg):
+            "Sub generator for handling messages (checks bans, words)"
+            contents = msg.content.strip().lower()
+            if self.has_badwords(contents):
                 return
-            args = msg.content.strip().split(" ")
-            key = args.pop(0).lower() # messages sent can't be empty
+            key, *args = contents.split(" ")
             if key in self.ACTIONS:
                 if self.is_banned(msg.author.id):
                     self.logger("Banned user attempted command")

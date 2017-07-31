@@ -147,14 +147,15 @@ class ChatBot(Bot):
     TODO: add a Singleton pattern to prevent creating more than one bot instance
     """
     PREFIX    = "!"
+    BLACKLIST = "blacklist"
+
+    BANS      = dict()
     ACTIONS   = dict()
     HELPMSGS  = dict()
-    BLACKLIST = "blacklist"
-    BANS      = dict()
 
     # Bad words to prevent malicious searches from a host device
-    BADWORDS = ["fuck", "cock", "child", "kiddy", "porn", "pron", "pr0n",
-                "masturbate", "bate", "shit", "piss", "anal", "cum", "wank"]
+    BADWORDS  = ["fuck", "cock", "child", "kiddy", "porn", "pron", "pr0n",
+                 "masturbate", "bate", "shit", "piss", "anal", "cum", "wank"]
 
     # Change this to adjust your default status setting (loads in on_ready())
     STATUS    = "Beep bloop!"

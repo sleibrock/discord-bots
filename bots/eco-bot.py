@@ -15,7 +15,7 @@ class EcoBot(ChatBot):
 
     # These have to be set beforehand (and can't be defined locally)
     ChatBot.PREFIX       = '$'
-    ChatBot.STATUS       = f'{PREFIX}help for info'
+    ChatBot.STATUS       = f'{ChatBot.PREFIX}help for info'
 
     STEAM_SEARCH_URL     = 'http://steamcommunity.com/market/search?q={}'
     STOCKS_SEARCH_URL    = ''

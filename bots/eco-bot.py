@@ -56,7 +56,7 @@ class EcoBot(ChatBot):
         bsp2  = BS(resp2.text, 'html.parser')
         """
         price     = item_listing[0].find('span', class_='normal_price')
-        item_name = item_listing[0].find(span, id='result_0_name')
+        item_name = item_listing[0].find('span', id='result_0_name')
         msg = [
             f"Name: {item_name}",
             f"Price: {price}",

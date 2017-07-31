@@ -60,7 +60,7 @@ class EcoBot(ChatBot):
         normal_price = price_span.find('span', class_='normal_price')
         msg = [
             f"Name: {item_name.text}",
-            f"Price: {price.text}",
+            f"Price: {normal_price.text}",
             f"URL: {url_first_item}",
         ]
         return await self.message(mobj.channel, '\n'.join(msg))

@@ -22,7 +22,7 @@ class EcoBot(ChatBot):
     def __init__(self, name):
         super(EcoBot, self).__init__(name)
 
-    @ChatBot.action('<item name>')
+    @EcoBot.action('<item name>')
     async def steam(self, args, mobj):
         '''
         Search Steam market for an item
@@ -49,7 +49,8 @@ class EcoBot(ChatBot):
             return await self.message(mobj.channel, f'Failed search (status: {resp.status_code})')
         bsp2  = BS(resp2.text, 'html.parser')
         """
-        price = item_listing[0].find_all('span', class_='normal_price')
+        price     = item_listing[0].find('span', class_='normal_price')
+        item_name = item_listing[0].find(span, id='result_0_name')
         msg = [
             f"Name: {item_name}",
             f"Price: {price}",
@@ -57,7 +58,7 @@ class EcoBot(ChatBot):
         ]
         return await self.message(mobj.channel, '\n'.join(msg))
 
-    @ChatBot.action('<item name>')
+    @EcoBot.action('<item name>')
     async def scape(self, args, mobj):
         '''
         Search RuneScape 3's Grand Exchange
@@ -65,7 +66,7 @@ class EcoBot(ChatBot):
         '''
         return await self.message(mobj.channel, 'Not implemented')
 
-    @ChatBot.action('<stock ID>')
+    @EcoBot.action('<stock ID>')
     async def stock(self, args, mobj):
         '''
         Search the actual stock market

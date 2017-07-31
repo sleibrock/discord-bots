@@ -55,8 +55,8 @@ class EcoBot(ChatBot):
             return await self.message(mobj.channel, f'Failed search (status: {resp.status_code})')
         bsp2  = BS(resp2.text, 'html.parser')
         """
-        price     = item_listing[0].find('span', class_='normal_price')
-        item_name = item_listing[0].find('span', id='result_0_name')
+        price     = item_listing[0].find('span', class_='normal_price').text
+        item_name = item_listing[0].find('span', id='result_0_name').text
         msg = [
             f"Name: {item_name}",
             f"Price: {price}",

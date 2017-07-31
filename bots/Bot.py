@@ -236,7 +236,7 @@ class ChatBot(Bot):
         that will let you add the bot to one of your current servers
         """
         if not self.client.servers:
-            self.logger(f"Join link: {discord.utils.oauth_url(self.client.user.id)}")
+            self.logger(f"Join link: {oauth_url(self.client.user.id)}")
         return
 
     def add_ban(self, ban_target):

@@ -37,6 +37,7 @@ class DotaBot(WebHookBot):
         'User-Agent':   'Dota 2 scraper bot, contact steven(dot)leibrock(at)gmail(dot)com',
     }
 
+    # Joke names are what you want to have heroes labeled as in the result
     JOKES1 = {
         "Io":               "Wisp",
         "Tiny":             "Tony",
@@ -49,6 +50,7 @@ class DotaBot(WebHookBot):
         "Spirit Breaker":   "Space Cow",
     }
 
+    # Instead of saying the standard footer, a joke is included at the bottom if matches
     JOKES2 = {
         "Sniper":           "Snipin's a good job mate",
         "Kunkka":           "No room to swing a cat in this crowd",
@@ -63,7 +65,8 @@ class DotaBot(WebHookBot):
         "Legion Commander": "FIGHT ME",
         "Nature's Prophet": "Nature's Wrath",
     }
-    
+
+
     def __init__(self, name):
         super(DotaBot, self).__init__(name)
         self.heroes     = list()
@@ -76,12 +79,14 @@ class DotaBot(WebHookBot):
         self._load_hero_data()
         self.logger(f"Heroes loaded: {len(self.heroes)}")
 
+
     def _load_match_url(self):
         "Load up a match URL from the key settings"
         url = self.keydata.get("match_url", self.OPENDOTA_URL)
         if not url.startswith("http"):
             raise IOError("Invalid key given for 'match_url': not http(s)")
         return url
+
 
     def _load_hero_data(self, force=False):
         "Prefetch the Hero JSON from OpenDota"
@@ -97,6 +102,7 @@ class DotaBot(WebHookBot):
         self.heroes = r.json()
         return
 
+
     def find_hero(self, hid):
         "Wrapper for finding a hero in a haystack of heroes"
         for hero in self.heroes:
@@ -104,12 +110,14 @@ class DotaBot(WebHookBot):
                 return hero["localized_name"]
         return "Jebaited"
 
+
     @staticmethod
     def percent(a=0, b=0, d=1):
         "Convert (a+b)/d to a 1.23 float"
         if d == 0:
             return 0
         return round(((a+b)/float(d))*100.0, 2)
+
 
     @staticmethod
     def get_timestr(seconds_i):
@@ -121,6 +129,7 @@ class DotaBot(WebHookBot):
             hours = f"{minutes // 60}:"
             minutes = f"{minutes % 60}".zfill(2)
         return f"{hours}{minutes}:{seconds}"
+
 
     def get_last_match(self, player_path):
         """
@@ -135,33 +144,36 @@ class DotaBot(WebHookBot):
         # Read the player's profile file
         with open(player_path, 'r') as f:
             player_data = jload(f)
-        
+
         dota_id    = player_data.get('dota_id', "")
         last_match = player_data.get('last_match', 0)
-        
+
         # If there's no ID at all, just stop
         if not dota_id:
             return (None, None, "Invalid dota ID string")
 
-        resp = get(f"{self.OPENDOTA_API}/players/{dota_id}/matches?limit=1")
+        # Request data from OpenDota API to get the last match played
+        # Toggle significant to zero to allow for non-important (skill-based)
+        resp = get(f"{self.OPENDOTA_API}/players/{dota_id}/matches?limit=1&significant=0")
         if resp.status_code != 200:
             return (None, None, f"Couldn't load matches for {dota_id}")
 
         data = resp.json()
         if not data:
             return (None, None, "No matches to be found (???)")
-        
+
         match_id = data[0].get('match_id', 0)
         if match_id == 0:
             return (None, None, "Failed to find any new matches")
-        
+
         if match_id != last_match:
             with open(player_path, 'w') as f:
                 data = {'dota_id': dota_id, 'last_match': match_id}
                 jdump(data, f)
                 return (match_id, dota_id, "")
         return (None, None, f"No new matches for {dota_id}")
-                
+
+
     def get_payload(self, match_id, dota_id):
         """
         Craft an embed payload for the Discord endpoint
@@ -174,14 +186,14 @@ class DotaBot(WebHookBot):
         jsonblob = resp.json()
         data     = dict()
         embs     = list()
-        
+
         # Game dependent variables
         players       = jsonblob["players"]
         radiant_win   = jsonblob["radiant_win"]
         game_mode     = jsonblob["game_mode"]
         scores        = (jsonblob["radiant_score"], jsonblob["dire_score"])
         duration      = self.get_timestr(jsonblob["duration"])
-        
+
         # Find the player (or not, then just fail)
         player = None
         for p in jsonblob["players"]:
@@ -195,7 +207,7 @@ class DotaBot(WebHookBot):
         team        = player["isRadiant"]
         pname       = player["personaname"]
         hero_name   = self.find_hero(player["hero_id"])
-        
+
         # Score of game
         wlt = ["Radiant", "~~Dire~~"]  # use strikethrough to show who lost
         if not radiant_win:
@@ -205,7 +217,7 @@ class DotaBot(WebHookBot):
             "value" : f"{wlt[0]} **{scores[0]}** - **{scores[1]}** {wlt[1]}",
             "inline": True
         })
-    
+
         # Player Stats field
         pt = self.percent(k, a, scores[0 if team else 1])
         embs.append({
@@ -213,7 +225,7 @@ class DotaBot(WebHookBot):
             "value" : f"{k}/{d}/{a} ({pt}% of team)",
             "inline": True
         })
-        
+
         # replay sensitive data is still tagged in the JSON output
         # such that trying to access a replay tag will always be None or some_value
         # Use <dictproperty>.get(key, <default_value>) to request a value
@@ -253,7 +265,7 @@ class DotaBot(WebHookBot):
                     "value" : f"*{choice(user_lines)}* -{pname}",
                     "inline": True
                 })
-        
+
         # craft the main embed
         player_won  = team is radiant_win
         hname       = self.JOKES1.get(hero_name, hero_name)
@@ -271,6 +283,7 @@ class DotaBot(WebHookBot):
         }]
         return (data, "")
 
+
     def post_payload(self, data):
         "Send a data dict to the Discord endpoint"
         if not data:
@@ -280,6 +293,7 @@ class DotaBot(WebHookBot):
         if re.status_code != 204:
             return self.logger("Failed to post match")
         return re
+
 
     def main(self):
         "Main Dota 2 match loop"
@@ -300,6 +314,7 @@ class DotaBot(WebHookBot):
                 continue
             self.post_payload(payload)
         self.logger("Finished looping")
+
 
 if __name__ == "__main__":
     DotaBot("dota-bot").run()

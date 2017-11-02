@@ -28,15 +28,18 @@ class DumbBot(ChatBot):
         ("zero", "one", "two", "three", "four", 
          "five", "six", "seven", "eight", "nine")])}
 
+
     def __init__(self, name):
         super(DumbBot, self).__init__(name)
         self.filegen = self._create_filegen("shared")
 
+
     @ChatBot.action('<Command>')
     async def help(self, args, mobj):
         """
-        Return a link to a command reference sheet
-        If you came here from !help help, you're out of luck
+        Show the documentation string for a given command
+        If you came here from '!help help', hi and thanks for using me!
+        Example: !help roll
         """
         if args:
             key = args[0]
@@ -45,6 +48,7 @@ class DumbBot(ChatBot):
             if key in self.ACTIONS:
                 t = self.pre_text(f'Help for \'{key}\':{self.ACTIONS[key].__doc__}')
                 return await self.message(mobj.channel, t)
+
         keys = [f'{k}' for k in self.ACTIONS.keys()]
         longest = max((len(s) for s in keys)) + 2
         output = 'Thank you for choosing Dumb Bot™ for your channel\n'
@@ -55,6 +59,7 @@ class DumbBot(ChatBot):
         output += f'\nVisit {self.GIT_URL} for more info'
         return await self.message(mobj.channel, self.pre_text(output))
 
+
     @ChatBot.action('<Status String>')
     async def status(self, args, mobj):
         """
@@ -62,6 +67,7 @@ class DumbBot(ChatBot):
         Example: !status haha ur dumb
         """
         return await self.set_status(" ".join(args))
+
 
     @ChatBot.action('<Dota ID String>')
     async def dota(self, args, mobj):
@@ -85,6 +91,7 @@ class DumbBot(ChatBot):
             jdump({'dota_id': u}, f)
         return await self.message(mobj.channel, f"Registered ID {u}")
 
+
     @ChatBot.action()
     async def coin(self, args, mobj):
         """
@@ -92,6 +99,7 @@ class DumbBot(ChatBot):
         Example: !coin
         """
         return await self.message(mobj.channel, choice([":monkey:", ":snake:"]))
+
 
     @ChatBot.action('<Number>')
     async def roll(self, args, mobj):
@@ -112,6 +120,7 @@ class DumbBot(ChatBot):
 
         res = [self.emojis[x] for x in str(randint(1, num)).zfill(len(x))]
         return await self.message(mobj.channel, "".join(res))
+
 
     @ChatBot.action('[Search terms]')
     async def yt(self, args, mobj):
@@ -143,6 +152,7 @@ class DumbBot(ChatBot):
                 return await self.message(mobj.channel, f'{self.YOUTUBE_URL}{href}')
         return await self.message(mobj.channel, "No YouTube video found")
 
+
     @ChatBot.action('[String]')
     async def spam(self, args, mobj):
         """
@@ -164,6 +174,7 @@ class DumbBot(ChatBot):
         await self.client.add_reaction(mobj, '👎')
         return
 
+
     @ChatBot.action('[Users]')
     async def ban(self, args, mobj):
         """
@@ -180,6 +191,7 @@ class DumbBot(ChatBot):
                 bancount += 1 if r else 0
         return await self.message(mobj.channel, f"{bancount} users banned")
 
+
     @ChatBot.action('[Users]')
     async def unban(self, args, mobj):
         """
@@ -195,6 +207,7 @@ class DumbBot(ChatBot):
                 r = self.del_ban(uid)
                 unbanc += 1 if r else 0
         return await self.message(mobj.channel, f"{unbanc} users unbanned")
+
 
     @ChatBot.action()
     async def botinfo(self, args, mobj):
@@ -216,6 +229,7 @@ class DumbBot(ChatBot):
             f'Commit URL: {self.GIT_URL}/commit/{head_hash}'
         ]
         return await self.message(mobj.channel, '```{}```'.format('\n'.join(lines)))
+
 
 if __name__ == '__main__':
     DumbBot('dumb-bot').run()

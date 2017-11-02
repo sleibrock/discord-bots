@@ -9,6 +9,7 @@ A collection of Robots for Discord.
 * [Discord.py API](http://discordpy.readthedocs.io/en/latest/api.html)
 * [Discord Dev Portal](https://discordapp.com/developers/docs/intro)
 
+
 ### Introduction
 
 Discord, the popular chat service aimed at gamers, supports a WebSocket API for sending and receiving data. From this we can create Bot users, so this project has the sole focus of creating various bots to be used with the Discord service.
@@ -19,7 +20,6 @@ Currently, there's two types of Bots that can be used with Discord:
 * Interactive chat bot - a bot that receives and can send messages to channels
 * WebHook bot - a bot that can only send data to a channel via a URI endpoint
 
-Right now this project uses mostly Interactives. WebHooks are being explored.
 
 ### Requirements
 
@@ -31,8 +31,6 @@ To run this project you will need:
 * `virtualenv` installed from Pip
 * Your own set of Discord credentials to use with Bots
 
-Bots can be copied freely from the source code if you just wish to make a bot. 
-However running this repository requires the above listed requirements.
 
 ### Setup
 
@@ -46,10 +44,13 @@ make setup
 make run
 ```
 
-If you are using Chat Bots, you need to authorize Bot applications on your
-developer page and copy the access token to a local file. If you are using
-a WebHook bot, you need to create a WebHook endpoint on a targeted channel
-and save that URI to a local file.
+Each bot needs a key in order to use the Discord API. A Chat Bot requires an access token that is assigned when you create a Bot account under your Discord Developer page. A WebHook Bot requires a WebHook URL to post data to. Keys are stored in JSON format for easy loading, so use the following format and store the keys under a `keys/` folder named `<bot-filename>.key`.
+```json
+{
+    "key": "secret_key" # or https:// link for webhook bots
+}
+```
+
 
 ### Bots Maintained Currently
 
@@ -57,6 +58,7 @@ Here's the list of bots under development.
 
 * `dumb-bot`, a basic bot to integrate with the rest of the project
 * `dota-bot`, an automated daemon to send Dota match info through WebHooks
+* `eco-bot`, a game-economy assistant to look up prices (early development stages)
 
 Other bots are currently being ported from an older library, have been removed, 
 or are just undergoing plain old experimentation for the time being. Disabled bots

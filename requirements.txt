@@ -1,4 +1,4 @@
-aiohttp==1.0.5
+aiohttp==3.7.4
 appdirs==1.4.3
 async-timeout==1.2.1
 beautifulsoup4==4.6.0

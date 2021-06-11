@@ -10,4 +10,4 @@ packaging==16.8
 pyparsing==2.2.0
 requests==2.14.1
 six==1.10.0
-websockets==3.3
+websockets==9.1

@@ -1,6 +1,16 @@
 Discord Bots
 ============
 
+## Archival Notice
+
+Hello anyone stumbling across this repo. As it currently stands, this is one of my most starred repositories, and I started it years ago to make it easier to write Discord bots in Python using the `discord.py` API, which works great and I had a fun time doing it. However, it is time for me to archive this repository, as there is no support or new additions ever coming.
+
+My last "real" commit on this project was over 6 years ago, and I mostly stopped using this many moons ago and no longer plan on contributing code to this. I am still bumping merge requests from the automated systems to bump dependencies, but even that feels unnecessary. I would rather archive this and let it be preserved; anyone interested in supporting this can fork this and make new additions / do whatever they please. It is MIT licensed, you can do as you wish.
+
+This notice will be the last commit, and I will publish this as a 1.0 tag to make it final. Thank you for all the fish and stars, and I hope my code was helpful to anyone who happened to find it.
+
+---
+
 A collection of Robots for Discord.
 
 ### Docs
